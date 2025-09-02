@@ -1,0 +1,82 @@
+{% extends "fonar/base.html" %}
+{% load humanize %}
+{% block title %}Mis Solicitudes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">📑 Mis Solicitudes de Crédito</h2>
+
+    <div class="accordion" id="accordionSolicitudes">
+        {% for s in solicitudes %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-{{ s.id }}">
+                    <button class="accordion-button collapsed" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#collapse-{{ s.id }}" 
+                            aria-expanded="false" 
+                            aria-controls="collapse-{{ s.id }}">
+                        Solicitud #{{ s.id }} 
+                        {% if s.estado == "pendiente" %}
+                            <span class="badge bg-warning text-dark ms-2">Pendiente</span>
+                        {% elif s.estado == "aprobado" %}
+                            <span class="badge bg-success ms-2">Aprobado</span>
+                        {% else %}
+                            <span class="badge bg-danger ms-2">Rechazado</span>
+                        {% endif %}
+                    </button>
+                </h2>
+                <div id="collapse-{{ s.id }}" 
+                     class="accordion-collapse collapse" 
+                     aria-labelledby="heading-{{ s.id }}" 
+                     data-bs-parent="#accordionSolicitudes">
+                    <div class="accordion-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p><strong>Monto solicitado:</strong> ${{ s.monto|floatformat:0|intcomma }}</p>
+                                <p><strong>Cuotas:</strong> {{ s.cuotas }}</p>
+                                <p><strong>Fecha deseada:</strong> {{ s.fecha_deseada_desembolso|date:"d/m/Y" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Fecha solicitud:</strong> {{ s.fecha_solicitud|date:"d/m/Y H:i" }}</p>
+                                <p><strong>Tasa aplicada:</strong> {{ s.interes }}% mensual</p>
+                                <p><strong>Estado:</strong> 
+                                    {% if s.estado == "pendiente" %}
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                    {% elif s.estado == "aprobado" %}
+                                        <span class="badge bg-success">Aprobado</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Rechazado</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        {% if s.estado == "aprobado" %}
+                            <div class="alert alert-success">
+                                ✅ Esta solicitud ya fue aprobada y convertida en préstamo.
+                            </div>
+                        {% elif s.estado == "rechazado" %}
+                            <div class="alert alert-danger">
+                                ❌ Esta solicitud fue rechazada.
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                ⏳ Esta solicitud aún está en revisión.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-info text-center">
+                Aún no tienes solicitudes registradas.
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="text-end mt-3">
+        <a href="{% url 'ver_prestamos' %}" class="btn btn-secondary">⬅ Volver</a>
+    </div>
+</div>
+{% endblock %}

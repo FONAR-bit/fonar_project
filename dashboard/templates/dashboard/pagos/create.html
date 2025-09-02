@@ -1,0 +1,178 @@
+{% extends "dashboard/base.html" %}
+{% load widget_tweaks %}
+{% load formato_monedas %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="fw-bold">Crear Pago</h2>
+    <p class="text-muted">Registra un nuevo pago y sus aplicaciones asociadas.</p>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <!-- 🔹 Encabezado reorganizado -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Usuario</label>
+                        {{ form.usuario|add_class:"form-select form-select-sm" }}
+                        {% for error in form.usuario.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Monto Reportado</label>
+                        {{ form.monto_reportado|add_class:"form-control form-control-sm text-end" }}
+                        {% for error in form.monto_reportado.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha</label>
+                        {{ form.fecha|add_class:"form-control form-control-sm" }}
+                        {% for error in form.fecha.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Monto Aplicado</label>
+                        <input type="text" 
+                               class="form-control form-control-sm text-end bg-light" 
+                               value="$ 0" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Pendiente por aplicar</label>
+                        <input type="text" 
+                               class="form-control form-control-sm text-end" 
+                               value="$ 0.00" readonly>
+                    </div>
+
+                    <div class="col-md-8">
+                        <label class="form-label">Soporte</label>
+                        {{ form.soporte|add_class:"form-control form-control-sm" }}
+                        {% for error in form.soporte.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-4 d-flex align-items-center">
+                        <div class="form-check mt-4">
+                            {{ form.validado|add_class:"form-check-input" }}
+                            <label class="form-check-label" for="{{ form.validado.id_for_label }}">
+                                Validado
+                            </label>
+                        </div>
+                        {% for error in form.validado.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Comentarios</label>
+                        {{ form.comentarios|add_class:"form-control form-control-sm" }}
+                        {% for error in form.comentarios.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔹 Tabla de Aplicaciones -->
+        <h4>Aplicaciones del Pago</h4>
+        {{ formset.management_form }}
+
+        {% if formset.non_form_errors %}
+            <div class="alert alert-danger">
+                {% for error in formset.non_form_errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <table class="table table-bordered table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Tipo</th>
+                    <th>Cuota</th>
+                    <th>Fecha Aporte</th>
+                    <th>Capital</th>
+                    <th>Interés</th>
+                    <th>Monto Aplicado</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in formset.forms %}
+                <tr>
+                    {% for hidden in f.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}
+
+                    <td>
+                        {{ f.tipo }}
+                        {% for error in f.tipo.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {{ f.cuota }}
+                        {% for error in f.cuota.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {{ f.fecha_aporte }}
+                        {% for error in f.fecha_aporte.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {{ f.capital }}
+                        {% for error in f.capital.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {{ f.interes }}
+                        {% for error in f.interes.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {{ f.monto_aplicado }}
+                        {% for error in f.monto_aplicado.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </td>
+                    <td class="text-center">
+                        {% if f.instance.pk %}
+                            {{ f.DELETE }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- 🔹 Botones -->
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" name="action" value="save" class="btn btn-primary btn-sm">
+                💾 Guardar
+            </button>
+            <button type="submit" name="action" value="save_add" class="btn btn-success btn-sm">
+                💾 Guardar y crear nuevo
+            </button>
+            <button type="submit" name="action" value="save_continue" class="btn btn-info btn-sm text-white">
+                💾 Guardar y continuar editando
+            </button>
+            <a href="{% url 'dashboard:pagos-list' %}" class="btn btn-secondary btn-sm">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

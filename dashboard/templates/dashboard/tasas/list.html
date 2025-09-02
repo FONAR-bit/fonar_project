@@ -1,0 +1,52 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+<h2>📊 Tasas de Interés</h2>
+
+<form method="get" class="mb-3 row g-2">
+  <div class="col-md-4">
+    <select name="tipo_usuario" class="form-select">
+      <option value="">-- Tipo de Usuario --</option>
+      <option value="asociado" {% if request.GET.tipo_usuario == "asociado" %}selected{% endif %}>Asociado</option>
+      <option value="tercero" {% if request.GET.tipo_usuario == "tercero" %}selected{% endif %}>Tercero</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+  </div>
+</form>
+
+<div class="d-flex gap-2 mb-3">
+  <a href="{% url 'dashboard:tasas-create' %}" class="btn btn-success">➕ Nueva Tasa</a>
+  <a href="{% url 'dashboard:prestamos-list' %}" class="btn btn-secondary">⬅️ Regresar</a>
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Tipo Usuario</th>
+      <th>Tipo Crédito</th>
+      <th>Rango Cuotas</th>
+      <th>Tasa Mensual</th>
+      <th>Vigente Desde</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in tasas %}
+    <tr>
+      <td>{{ t.get_tipo_usuario_display }}</td>
+      <td>{{ t.tipo_credito }}</td>
+      <td>{{ t.cuotas_min }} - {{ t.cuotas_max }}</td>
+      <td>{{ t.interes_mensual }}%</td>
+      <td>{{ t.vigente_desde|date:"d/m/Y" }}</td>
+      <td>
+        <a href="{% url 'dashboard:tasas-update' t.id %}" class="btn btn-warning btn-sm">✏️</a>
+        <a href="{% url 'dashboard:tasas-delete' t.id %}" class="btn btn-danger btn-sm">🗑️</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">No hay tasas registradas.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

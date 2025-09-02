@@ -1,0 +1,80 @@
+{% extends "fonar/base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">📑 Mis Pagos</h2>
+
+    <!-- Botón para subir soporte de pago -->
+    <div class="text-end mb-3">
+        <a href="{% url 'subir_pago' %}" class="btn btn-success btn-sm">
+            ➕ Subir soporte de pago
+        </a>
+    </div>
+
+    {% if pagos %}
+        <table class="table table-striped table-hover text-center shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Soporte</th>
+                    <th>Estado</th>
+                    <th>Comentarios</th>
+                    <th>Acciones</th> <!-- NUEVA COLUMNA -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for pago in pagos %}
+                <tr>
+                    <td>{{ pago.fecha|date:"d/m/Y H:i" }}</td>
+                    <td class="fw-bold">${{ pago.monto_reportado|floatformat:0|intcomma }}</td>
+                    <td>
+                        {% if pago.soporte %}
+                            <a href="{{ pago.soporte.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                📂 Ver archivo
+                            </a>
+                        {% else %}
+                            <span class="text-muted">No adjunto</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if pago.validado %}
+                            <span class="badge bg-success px-3 py-2">✔ Validado</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark px-3 py-2">⏳ Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if pago.comentarios %}
+                            {{ pago.comentarios }}
+                        {% else %}
+                            <span class="text-muted">Sin comentarios</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if pago.validado %}
+                            <a href="{% url 'pago_pdf' pago.id %}" class="btn btn-sm btn-danger">
+                                📄 Descargar PDF
+                            </a>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <!-- Estado vacío conservando el botón de subir soporte -->
+        <div class="alert alert-info text-center shadow-sm">
+            <p class="mb-2">Aún no has registrado pagos.</p>
+            <a href="{% url 'subir_pago' %}" class="btn btn-success btn-sm">➕ Subir soporte de pago</a>
+        </div>
+    {% endif %}
+
+    <div class="text-end mt-3">
+        <a href="{% url 'inicio' %}" class="btn btn-secondary btn-sm">⬅ Volver al inicio</a>
+    </div>
+</div>
+{% endblock %}

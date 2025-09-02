@@ -1,0 +1,109 @@
+{% extends "dashboard/base.html" %}
+{% load formato_monedas %}
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Detalle del Pago</h2>
+
+    <!-- Información principal del pago -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Información del Pago</h5>
+            
+            <div class="row">
+                <div class="col-6"><strong>Usuario:</strong></div>
+                <div class="col-6 text-end">{{ pago.usuario }}</div>
+            </div>
+            <div class="row">
+                <div class="col-6"><strong>Fecha:</strong></div>
+                <div class="col-6 text-end">{{ pago.fecha|date:"d/m/Y" }}</div>
+            </div>
+            <div class="row">
+                <div class="col-6"><strong>Monto Reportado:</strong></div>
+                <div class="col-6 text-end">{{ pago.monto_reportado|moneda }}</div>
+            </div>
+            <div class="row">
+                <div class="col-6"><strong>Monto Aplicado:</strong></div>
+                <div class="col-6 text-end">{{ pago.total_aplicado|moneda }}</div>
+            </div>
+            <div class="row">
+                <div class="col-6"><strong>Pendiente por cruzar:</strong></div>
+                <div class="col-6 text-end">
+                    <span class="{% if pago.faltante > 0 %}text-danger fw-bold{% endif %}">
+                        {{ pago.faltante|moneda }}
+                    </span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6"><strong>Validado:</strong></div>
+                <div class="col-6 text-end">
+                    {% if pago.validado %}
+                        <span class="badge bg-success">Sí</span>
+                    {% else %}
+                        <span class="badge bg-danger">No</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if pago.comentarios %}
+            <div class="row">
+                <div class="col-6"><strong>Comentarios:</strong></div>
+                <div class="col-6 text-end">{{ pago.comentarios }}</div>
+            </div>
+            {% endif %}
+
+            {% if pago.soporte %}
+            <div class="row">
+                <div class="col-6"><strong>Soporte:</strong></div>
+                <div class="col-6 text-end">
+                    <a href="{{ pago.soporte.url }}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Ver soporte</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Aplicaciones del Pago -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Aplicaciones del Pago</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Cuota</th>
+                            <th>Fecha Aporte</th>
+                            <th class="text-end">Capital</th>
+                            <th class="text-end">Interés</th>
+                            <th class="text-end">Monto aplicado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in formset %}
+                            {% if f.instance.monto_aplicado and f.instance.monto_aplicado != 0 %}
+                                <tr>
+                                    <td>{{ f.instance.tipo }}</td>
+                                    <td>{{ f.instance.cuota }}</td>
+                                    <td>{{ f.instance.fecha_aporte|date:"d/m/Y" }}</td>
+                                    <td class="text-end">{{ f.instance.capital|moneda }}</td>
+                                    <td class="text-end">{{ f.instance.interes|moneda }}</td>
+                                    <td class="text-end">{{ f.instance.monto_aplicado|moneda }}</td>
+                                </tr>
+                            {% endif %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No hay aplicaciones registradas</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón volver -->
+    <div class="d-flex gap-2">
+        <a href="{% url 'dashboard:pagos-list' %}" class="btn btn-secondary">⬅️ Volver</a>
+    </div>
+</div>
+{% endblock %}

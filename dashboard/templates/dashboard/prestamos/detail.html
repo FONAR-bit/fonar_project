@@ -1,0 +1,57 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% load formato_monedas %}
+
+{% block content %}
+<h2 class="mb-4">Detalle del Préstamo</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <p><strong>Usuario:</strong> {{ prestamo.usuario.username }}</p>
+        <p><strong>Fecha Desembolso:</strong> {{ prestamo.fecha_desembolso|date:"d/m/Y" }}</p>
+        <p><strong>Monto:</strong> {{ prestamo.monto|moneda }}</p>
+        <p><strong>Interés:</strong> {{ prestamo.interes }} %</p>
+        <p><strong>Número de Cuotas:</strong> {{ prestamo.cuotas }}</p>
+        <p><strong>Saldo Pendiente:</strong> {{ prestamo.saldo_pendiente|moneda }}</p>
+    </div>
+</div>
+
+<h4>Cuotas del Préstamo</h4>
+<div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Fecha Vencimiento</th>
+                <th class="text-end">Capital</th>
+                <th class="text-end">Interés</th>
+                <th class="text-end">Monto Cuota</th>
+                <th>Pagada</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cuota in cuotas %}
+            <tr>
+                <td>{{ cuota.numero }}</td>
+                <td>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</td>
+                <td class="text-end">{{ cuota.capital|moneda }}</td>
+                <td class="text-end">{{ cuota.interes|moneda }}</td>
+                <td class="text-end">{{ cuota.monto_cuota|moneda }}</td>
+                <td>
+                    {% if cuota.pagada %}
+                        <span class="badge bg-success">✔ Pagada</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Pendiente</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center">No hay cuotas generadas.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<a href="{% url 'dashboard:prestamos-update' prestamo.id %}" class="btn btn-warning">Editar</a>
+<a href="{% url 'dashboard:prestamos-list' %}" class="btn btn-secondary">Volver</a>
+{% endblock %}

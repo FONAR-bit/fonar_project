@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión - FONAR</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+        .login-card {
+            max-width: 400px;
+            margin: auto;
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            background: white;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+        .form-control {
+            border-radius: 10px;
+        }
+        .btn-primary {
+            border-radius: 10px;
+        }
+        .logo {
+            width: 400px;   /* 👈 igual al ancho de la tarjeta */
+            max-width: 100%;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Logo -->
+    <div class="text-center mt-4">
+        <img src="{% static 'images/logo.png' %}" alt="Logo FONAR" class="logo">
+    </div>
+
+    <div class="login-card">
+        <!-- Mensajes -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Formulario -->
+        <h3 class="text-center mb-4">Iniciar Sesión</h3>
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="id_username" class="form-label">Usuario</label>
+                <input type="text" name="username" autofocus required
+                       class="form-control" id="id_username"
+                       placeholder="Ingresa tu usuario">
+            </div>
+
+            <div class="mb-3">
+                <label for="id_password" class="form-label">Contraseña</label>
+                <input type="password" name="password" required
+                       class="form-control" id="id_password"
+                       placeholder="Ingresa tu contraseña">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

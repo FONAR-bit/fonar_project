@@ -1,0 +1,30 @@
+{% extends "dashboard/auth_base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-lg p-4 login-card">
+            <div class="text-center mb-4">
+                <!-- 👇 Usamos el mismo logo que en el login de usuarios -->
+                <img src="{% static 'images/logo.png' %}" alt="Logo FONAR" class="logo mb-3" style="max-height: 80px;">
+                <h4 class="fw-bold">Acceso Administrador</h4>
+                <p class="text-muted">Gestión interna del sistema FONAR</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    {{ form.username.label_tag }}
+                    {{ form.username }}
+                </div>
+                <div class="mb-3">
+                    {{ form.password.label_tag }}
+                    {{ form.password }}
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

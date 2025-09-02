@@ -1,0 +1,12 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+<div class="alert alert-danger">
+  <h4>¿Eliminar esta tasa de interés?</h4>
+  <p><strong>{{ object }}</strong></p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+    <a href="{% url 'dashboard:tasas-list' %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

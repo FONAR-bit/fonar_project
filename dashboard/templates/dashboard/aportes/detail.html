@@ -1,0 +1,22 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}  {# 👈 necesario para intcomma #}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Detalle del Aporte</h2>
+    <div class="card p-3 shadow-sm">
+        <p><strong>Usuario:</strong> {{ aporte.usuario.username }}</p>
+        <p><strong>Fecha:</strong> {{ aporte.fecha_aporte }}</p>
+        <p><strong>Monto:</strong> ${{ aporte.monto|intcomma }}</p>  {# 👈 ahora con separadores #}
+        <p><strong>Soporte:</strong>
+            {% if aporte.soporte %}
+                <a href="{{ aporte.soporte.url }}" target="_blank">Ver soporte</a>
+            {% else %}
+                No disponible
+            {% endif %}
+        </p>
+        <a href="{% url 'dashboard:aporte_update' aporte.id %}" class="btn btn-warning">Editar</a>
+        <a href="{% url 'dashboard:aporte_list' %}" class="btn btn-secondary">Volver</a>
+    </div>
+</div>
+{% endblock %}

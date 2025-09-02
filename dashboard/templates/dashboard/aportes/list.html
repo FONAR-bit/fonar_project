@@ -1,0 +1,56 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}  {# 👈 cargar humanize #}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Aportes</h2>
+    <a href="{% url 'dashboard:aporte_create' %}" class="btn btn-primary mb-3">+ Nuevo Aporte</a>
+
+    <!-- 🔍 Formulario de filtros -->
+    {# ... lo de filtros igual #}
+
+    <!-- Tabla de aportes -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Fecha</th>
+                    <th class="text-end">Monto</th>  {# 👈 encabezado alineado #}
+                    <th>Soporte</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for aporte in aportes %}
+                <tr>
+                    <td>{{ aporte.id }}</td>
+                    <td>{{ aporte.usuario.username }}</td>
+                    <td>{{ aporte.usuario.first_name }}</td>
+                    <td>{{ aporte.usuario.last_name }}</td>
+                    <td>{{ aporte.fecha_aporte }}</td>
+                    <td class="text-end">${{ aporte.monto|intcomma }}</td>  {# 👈 formateo + alineado #}
+                    <td>
+                        {% if aporte.soporte %}
+                            <a href="{{ aporte.soporte.url }}" target="_blank">Ver</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'dashboard:aporte_detail' aporte.id %}" class="btn btn-sm btn-info">Ver</a>
+                        <a href="{% url 'dashboard:aporte_update' aporte.id %}" class="btn btn-sm btn-warning">Editar</a>
+                        <a href="{% url 'dashboard:aporte_delete' aporte.id %}" class="btn btn-sm btn-danger">Eliminar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center">No hay aportes registrados</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

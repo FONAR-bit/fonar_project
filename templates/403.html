@@ -1,0 +1,25 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow-lg border-danger">
+            <div class="card-body text-center">
+                <h1 class="display-5 text-danger">🚫 Acceso Denegado</h1>
+                <p class="lead mt-3">
+                    No tienes permisos para acceder a esta sección del sistema.
+                </p>
+                <hr>
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    <a href="{% url 'dashboard:admin-login' %}" class="btn btn-primary">
+                        🔑 Ir al login de administrador
+                    </a>
+                    <a href="/" class="btn btn-secondary">
+                        🏠 Volver al inicio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

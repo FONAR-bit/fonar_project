@@ -1,0 +1,21 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h4 class="card-title text-danger">⚠️ Confirmar eliminación</h4>
+        <p>
+            ¿Estás seguro de que deseas eliminar el pago de 
+            <strong>{{ object.usuario }}</strong> 
+            por un monto de 
+            <strong>${{ object.monto_reportado|floatformat:0|intcomma }}</strong>?
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">❌ Eliminar</button>
+            <a href="{% url 'dashboard:pagos-list' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

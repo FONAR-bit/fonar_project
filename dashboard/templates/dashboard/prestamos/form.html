@@ -1,0 +1,24 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+<h2 class="mb-4">{% if object %}Editar{% else %}Registrar{% endif %} Préstamo</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="row mb-3">
+                {% for field in form %}
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        <div class="text-danger">{{ field.errors }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{% url 'dashboard:prestamos-list' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

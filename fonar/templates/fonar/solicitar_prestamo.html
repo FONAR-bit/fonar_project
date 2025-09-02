@@ -1,0 +1,193 @@
+{% extends "fonar/base.html" %}
+{% load humanize %}
+{% block title %}Solicitar Préstamo{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">➕ Solicitar Préstamo</h2>
+
+    <form method="post" id="formSolicitud">
+        {% csrf_token %}
+
+        <div class="card shadow-sm p-4">
+            <div class="mb-3">
+                <label for="{{ form.monto.id_for_label }}" class="form-label">Monto solicitado</label>
+                {{ form.monto }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.cuotas.id_for_label }}" class="form-label">Número de cuotas</label>
+                {{ form.cuotas }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.fecha_deseada_desembolso.id_for_label }}" class="form-label">Fecha deseada de desembolso</label>
+                {{ form.fecha_deseada_desembolso }}
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="button" id="btnSimular" class="btn btn-outline-primary">
+                    📊 Simular Amortización
+                </button>
+            </div>
+
+            <!-- Resultado de simulación -->
+            <div id="simulacion" class="mt-4" style="display: none;">
+                <h5 class="text-center mb-2">📑 Tabla de Amortización Provisional</h5>
+                <p class="text-center">
+                    <span class="badge bg-info text-dark">Tasa aplicada: <span id="tasaAplicada">-</span>% mensual</span>
+                </p>
+
+                <!-- 🔹 Resumen del crédito -->
+                <div class="alert alert-secondary text-center" id="resumenCredito">
+                    <strong>Total crédito:</strong> <span id="resumenCreditoMonto">-</span> &nbsp; | 
+                    <strong>Total intereses:</strong> <span id="resumenIntereses">-</span> &nbsp; | 
+                    <strong>Total a pagar:</strong> <span id="resumenTotal">-</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Cuota</th>
+                                <th>Fecha</th>
+                                <th>Valor Cuota</th>
+                                <th>Interés</th>
+                                <th>Capital</th>
+                                <th>Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaSimulacion"></tbody>
+                    </table>
+                </div>
+
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-success">
+                        ✅ Confirmar Solicitud
+                    </button>
+                    <a href="{% url 'ver_prestamos' %}" class="btn btn-secondary">⬅ Cancelar</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// ---------- Formato COP ----------
+const inputMonto = document.getElementById("id_monto");
+if (inputMonto) {
+    inputMonto.addEventListener("input", function(e) {
+        let value = e.target.value.replace(/\D/g, "");
+        e.target.value = value ? new Intl.NumberFormat("es-CO").format(value) : "";
+    });
+}
+function parseCOP(valor) {
+    if (!valor) return 0;
+    return parseFloat(valor.replace(/\./g, "").replace(/,/g, ""));
+}
+function formatCOP(valor) {
+    return "$" + new Intl.NumberFormat("es-CO", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(valor);
+}
+document.getElementById("formSolicitud").addEventListener("submit", function() {
+    if (inputMonto) {
+        inputMonto.value = parseCOP(inputMonto.value);
+    }
+});
+
+// ---------- Simulación ----------
+document.getElementById("btnSimular").addEventListener("click", function() {
+    const monto = parseCOP(document.getElementById("id_monto").value);
+    const cuotas = parseInt(document.getElementById("id_cuotas").value);
+    const fechaInicio = document.getElementById("id_fecha_deseada_desembolso").value;
+
+    if (!monto || !cuotas || cuotas <= 0) {
+        alert("Por favor ingresa un monto y número de cuotas válido.");
+        return;
+    }
+    if (!fechaInicio) {
+        alert("Por favor selecciona la fecha de desembolso.");
+        return;
+    }
+
+    fetch(`/obtener-tasa/?cuotas=${cuotas}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            const tasaMensualPorc = parseFloat(data.tasa) || 0;
+            document.getElementById("tasaAplicada").textContent = new Intl.NumberFormat("es-CO", {
+                minimumFractionDigits: 0, maximumFractionDigits: 2
+            }).format(tasaMensualPorc);
+
+            const tasa = tasaMensualPorc / 100;
+            const tbody = document.getElementById("tablaSimulacion");
+            tbody.innerHTML = "";
+
+            let saldo = monto;
+            const interesMensual = tasa;
+
+            let cuotaFija;
+            if (Math.abs(interesMensual) < 1e-12) {
+                cuotaFija = saldo / cuotas;
+            } else {
+                cuotaFija = (saldo * (interesMensual * Math.pow(1 + interesMensual, cuotas))) /
+                            (Math.pow(1 + interesMensual, cuotas) - 1);
+            }
+
+            let totalIntereses = 0;
+            let totalPagado = 0;
+
+            let fecha = new Date(fechaInicio + "T00:00:00");
+
+            for (let i = 1; i <= cuotas; i++) {
+                let interes = Math.abs(interesMensual) < 1e-12 ? 0 : (saldo * interesMensual);
+                let capital = cuotaFija - interes;
+
+                saldo -= capital;
+
+                if (i === cuotas) {
+                    capital += saldo;
+                    saldo = 0;
+                }
+
+                totalIntereses += interes;
+                totalPagado += capital + interes;
+
+                let fechaCuota = new Date(fecha);
+                fechaCuota.setMonth(fechaCuota.getMonth() + (i - 1));
+
+                let fechaStr = fechaCuota.toLocaleDateString("es-ES", {
+                    day: "2-digit", month: "2-digit", year: "numeric"
+                });
+
+                const row = `<tr>
+                    <td>${i}</td>
+                    <td>${fechaStr}</td>
+                    <td>${formatCOP(cuotaFija)}</td>
+                    <td>${formatCOP(interes)}</td>
+                    <td>${formatCOP(capital)}</td>
+                    <td>${formatCOP(saldo > 0 ? saldo : 0)}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            }
+
+            // 🔹 Actualizar resumen
+            document.getElementById("resumenCreditoMonto").textContent = formatCOP(monto);
+            document.getElementById("resumenIntereses").textContent = formatCOP(totalIntereses);
+            document.getElementById("resumenTotal").textContent = formatCOP(totalPagado);
+
+            document.getElementById("simulacion").style.display = "block";
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("Hubo un problema al calcular la tasa.");
+        });
+});
+</script>
+{% endblock %}
