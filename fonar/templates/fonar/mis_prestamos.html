@@ -38,7 +38,7 @@
                                 <p><strong>Fecha desembolso:</strong> {{ data.prestamo.fecha_desembolso|date:"d/m/Y" }}</p>
                             </div>
                             <div class="col-md-6">
-                                <p><strong>Total pagado (Capital Ojo):</strong> <span class="text-success fw-bold">${{ data.total_pagado|intcomma }}</span></p>
+                                <p><strong>Total pagado (Capital):</strong> <span class="text-success fw-bold">${{ data.total_pagado|intcomma }}</span></p>
                                 <p><strong>Saldo pendiente (Capital):</strong> 
                                     {% if data.saldo_pendiente > 0 %}
                                         <span class="text-danger fw-bold">${{ data.saldo_pendiente|intcomma }}</span>
