@@ -61,11 +61,11 @@ WSGI_APPLICATION = 'fonar_project.wsgi.application'
 
 # 🚀 Base de datos → Railway inyecta DATABASE_URL automáticamente
 DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}", conn_max_age=600
+    "default": dj_database_url.parse(
+        "postgresql://postgres:PTEiebmQjTHGgaiJPUcPxDvxWQwkgtUF@crossover.proxy.rlwy.net:48990/railway",
+        conn_max_age=600
     )
 }
-
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
