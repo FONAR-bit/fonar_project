@@ -100,3 +100,7 @@ AUTH_USER_MODEL = 'fonar.Usuario'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://produccion-web-xxxxx.up.railway.app",
+]
