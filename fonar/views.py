@@ -15,7 +15,6 @@ from django.conf import settings
 import os
 from django.views.decorators.http import require_GET
 from .models import SolicitudPrestamo
-from django.core.mail import send_mail
 
 
 # Página de inicio con KPIs
@@ -271,24 +270,6 @@ def solicitar_prestamo(request):
         form = SolicitudPrestamoForm(request.user, request.POST)
         if form.is_valid():
             solicitud = form.save()
-
-            # 🔔 Enviar correo al recibir la solicitud
-            send_mail(
-                subject="📬 Nueva Solicitud de Préstamo",
-                message=f"""
-Se ha recibido una nueva solicitud de préstamo:
-
-👤 Usuario: {request.user.get_full_name()} ({request.user.email})
-💰 Monto solicitado: ${solicitud.monto:,.0f}
-📆 Fecha deseada de desembolso: {solicitud.fecha_deseada_desembolso.strftime('%d/%m/%Y')}
-📅 Fecha de solicitud: {solicitud.fecha_solicitud.strftime('%d/%m/%Y')}
-📌 Número de cuotas: {solicitud.cuotas}
-""",
-                from_email='fondofamiliarfonar@gmail.com',
-                recipient_list=['fondofamiliarfonar@gmail.com'],  # puedes agregar más destinatarios si quieres
-                fail_silently=False,  # cambia a True si no quieres que falle la vista si falla el correo
-            )
-
             messages.success(request, "✅ Tu solicitud fue enviada y está pendiente de aprobación.")
             return redirect("ver_prestamos")
     else:

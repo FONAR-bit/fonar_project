@@ -105,13 +105,3 @@ CSRF_TRUSTED_ORIGINS = [
     "https://web-production-02dea.up.railway.app",
 ]
 
-# === CONFIGURACIÓN DE CORREO GMAIL ===
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'fondofamiliarfonar@gmail.com'
-EMAIL_HOST_PASSWORD = 'qkapqllehscujpca'
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
