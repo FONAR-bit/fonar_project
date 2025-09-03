@@ -15,6 +15,7 @@ from django.conf import settings
 import os
 from django.views.decorators.http import require_GET
 from .models import SolicitudPrestamo
+from django.core.mail import send_mail
 
 
 # Página de inicio con KPIs
@@ -63,19 +64,30 @@ def ver_aportes(request):
 @login_required
 def ver_prestamos(request):
     prestamos = Prestamo.objects.filter(usuario=request.user)
-
     prestamos_data = []
+
     for prestamo in prestamos:
         cuotas = CuotaPrestamo.objects.filter(prestamo=prestamo).order_by("numero")
+
+        # Aplicaciones de pagos validados
         aplicaciones = PagoAplicacion.objects.filter(
             prestamo=prestamo,
             pago__validado=True
         )
 
-        total_pagado = aplicaciones.aggregate(Sum('monto_aplicado'))['monto_aplicado__sum'] or Decimal('0')
-        total_pagado = total_pagado.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
-        saldo_pendiente = (prestamo.monto_total - total_pagado).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+        # Solo sumar capital pagado
+        capital_pagado = aplicaciones.aggregate(Sum('capital'))['capital__sum'] or Decimal('0')
+        capital_pagado = capital_pagado.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
 
+        # Saldo pendiente de capital
+        capital_pendiente = cuotas.filter(pagada=False).aggregate(Sum('capital'))['capital__sum'] or Decimal('0')
+        capital_pendiente = capital_pendiente.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+
+        # Intereses pendientes (solo informativos)
+        interes_pendiente = cuotas.filter(pagada=False).aggregate(Sum('interes'))['interes__sum'] or Decimal('0')
+        interes_pendiente = interes_pendiente.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+
+        # Pagos realizados (sigue igual)
         pagos = (
             aplicaciones
             .values("pago_id", "pago__fecha")
@@ -95,11 +107,13 @@ def ver_prestamos(request):
             "prestamo": prestamo,
             "cuotas": cuotas,
             "pagos": pagos_info,
-            "total_pagado": total_pagado,
-            "saldo_pendiente": saldo_pendiente,
+            "total_pagado": capital_pagado,          # ✅ ahora es solo capital
+            "saldo_pendiente": capital_pendiente,    # ✅ sigue siendo solo capital
+            "interes_pendiente": interes_pendiente   # ✅ valor extra informativo
         })
 
     return render(request, 'fonar/mis_prestamos.html', {"prestamos_data": prestamos_data})
+
 
 
 @login_required
@@ -257,6 +271,24 @@ def solicitar_prestamo(request):
         form = SolicitudPrestamoForm(request.user, request.POST)
         if form.is_valid():
             solicitud = form.save()
+
+            # 🔔 Enviar correo al recibir la solicitud
+            send_mail(
+                subject="📬 Nueva Solicitud de Préstamo",
+                message=f"""
+Se ha recibido una nueva solicitud de préstamo:
+
+👤 Usuario: {request.user.get_full_name()} ({request.user.email})
+💰 Monto solicitado: ${solicitud.monto:,.0f}
+📆 Fecha deseada de desembolso: {solicitud.fecha_deseada_desembolso.strftime('%d/%m/%Y')}
+📅 Fecha de solicitud: {solicitud.fecha_solicitud.strftime('%d/%m/%Y')}
+📌 Número de cuotas: {solicitud.cuotas}
+""",
+                from_email='fondofamiliarfonar@gmail.com',
+                recipient_list=['fondofamiliarfonar@gmail.com'],  # puedes agregar más destinatarios si quieres
+                fail_silently=False,  # cambia a True si no quieres que falle la vista si falla el correo
+            )
+
             messages.success(request, "✅ Tu solicitud fue enviada y está pendiente de aprobación.")
             return redirect("ver_prestamos")
     else:
