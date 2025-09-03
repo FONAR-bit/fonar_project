@@ -8,12 +8,11 @@ import dj_database_url  # 👈 para leer la variable DATABASE_URL de Railway
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "clave-insegura")  # 👈 mejor tomarla de env
-
-# 🚀 En producción, siempre DEBUG=False
+# 🔑 Seguridad
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "clave-insegura")  # en Railway usa env
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-# Railway asigna un dominio dinámico → permitimos todos
+# 🚀 Railway asigna un dominio dinámico → permitimos todos
 ALLOWED_HOSTS = ["*"]
 
 # Application definition
@@ -75,7 +74,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
+# 🌎 Internacionalización
 LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
@@ -84,10 +83,8 @@ USE_TZ = True
 
 # Archivos estáticos
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",   
-]
-STATIC_ROOT = BASE_DIR / "staticfiles"  
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # 👇 Whitenoise recomienda compresión y manifest
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
