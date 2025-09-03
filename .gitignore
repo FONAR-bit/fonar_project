@@ -1,16 +1,35 @@
 # Byte-compiled / cache
 __pycache__/
 *.py[cod]
+*.pyo
 
-# Virtual environment
+# Environment
 .env
 venv/
+env/
 *.sqlite3
 
 # Django static & media
-/media
-/staticfiles
+/media/
+staticfiles/
 
-# IDE settings
+# Database (for local SQLite dev)
+db.sqlite3
+
+# Logs and temporary files
+*.log
+*.pot
+*.pyc
+*.pyd
+*.pid
+*.swp
+.DS_Store
+Thumbs.db
+
+# IDE/editor configs
 .vscode/
 .idea/
+
+# OS-specific
+*.bak
+*.tmp
