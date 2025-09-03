@@ -1,0 +1,96 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% load formato_monedas %}
+
+{% block content %}
+<h2 class="mb-4">Préstamos Registrados</h2>
+
+<div class="card">
+    <div class="card-body">
+        <!-- 🔎 Formulario de filtros -->
+        <form method="get" class="row g-3 mb-3">
+
+            <!-- Buscar por usuario -->
+            <div class="col-md-3">
+                <input type="text" name="usuario" class="form-control"
+                       placeholder="Buscar por usuario..." value="{{ request.GET.usuario }}">
+            </div>
+
+            <!-- Rango de fechas -->
+            <div class="col-md-3">
+                <input type="date" name="fecha_inicio" class="form-control"
+                       value="{{ request.GET.fecha_inicio }}">
+            </div>
+            <div class="col-md-3">
+                <input type="date" name="fecha_fin" class="form-control"
+                       value="{{ request.GET.fecha_fin }}">
+            </div>
+
+            <!-- Monto mínimo -->
+            <div class="col-md-2">
+                <input type="number" name="monto_min" class="form-control"
+                       placeholder="Monto mín." value="{{ request.GET.monto_min }}">
+            </div>
+
+            <!-- Monto máximo -->
+            <div class="col-md-2">
+                <input type="number" name="monto_max" class="form-control"
+                       placeholder="Monto máx." value="{{ request.GET.monto_max }}">
+            </div>
+
+            <!-- Botón filtrar -->
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+
+            <!-- Botón limpiar -->
+            <div class="col-md-2">
+                <a href="{% url 'dashboard:prestamos-list' %}" class="btn btn-secondary w-100">Limpiar</a>
+            </div>
+        </form>
+
+        <!-- Tabla de préstamos -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Fecha Desembolso</th>
+                        <th class="text-end">Monto</th>
+                        <th class="text-end">Interés (%)</th>
+                        <th class="text-end">Cuotas</th>
+                        <th class="text-end">Saldo Pendiente</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prestamo in prestamos %}
+                        <tr>
+                            <td>{{ prestamo.id }}</td>
+                            <td>{{ prestamo.usuario.username }}</td>
+                            <td>{{ prestamo.fecha_desembolso|date:"d/m/Y" }}</td>
+                            <td class="text-end">{{ prestamo.monto|moneda }}</td>
+                            <td class="text-end">{{ prestamo.interes }}</td>
+                            <td class="text-end">{{ prestamo.cuotas }}</td>
+                            <td class="text-end">{{ prestamo.capital_pendiente|moneda }}</td>
+                            <td>
+                                <a href="{% url 'dashboard:prestamos-detail' prestamo.id %}" class="btn btn-sm btn-info">👁</a>
+                                <a href="{% url 'dashboard:prestamos-update' prestamo.id %}" class="btn btn-sm btn-primary">✏️</a>
+                                <a href="{% url 'dashboard:prestamos-delete' prestamo.id %}" class="btn btn-sm btn-danger">🗑</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="8" class="text-center">No se encontraron préstamos registrados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <a href="{% url 'dashboard:prestamos-create' %}" class="btn btn-success mt-3">➕ Registrar Préstamo</a>
+        <a href="{% url 'dashboard:tasas-list' %}" class="btn btn-secondary mt-3">📊 Ver Tasas de Interés</a>
+        <a href="{% url 'dashboard:solicitudes-list' %}" class="btn btn-warning mt-3">📑 Ver Solicitudes de Crédito</a>
+
+    </div>
+</div>
+{% endblock %}

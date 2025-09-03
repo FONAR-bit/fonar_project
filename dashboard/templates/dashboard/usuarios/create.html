@@ -1,0 +1,114 @@
+{% extends "dashboard/base.html" %}
+{% load widget_tweaks %}
+
+
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h2 class="card-title mb-3">Nuevo Usuario</h2>
+    <p class="text-muted">Completa la información para registrar un nuevo usuario.</p>
+    <hr>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="mb-3 row">
+        <label for="{{ form.username.id_for_label }}" class="col-sm-3 col-form-label">Nombre de usuario</label>
+        <div class="col-sm-9">
+          {{ form.username|add_class:"form-control" }}
+          {% if form.username.errors %}
+            <div class="text-danger small">{{ form.username.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mb-3 row">
+        <label for="{{ form.email.id_for_label }}" class="col-sm-3 col-form-label">Correo electrónico</label>
+        <div class="col-sm-9">
+          {{ form.email|add_class:"form-control" }}
+          {% if form.email.errors %}
+            <div class="text-danger small">{{ form.email.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mb-3 row">
+        <label for="{{ form.first_name.id_for_label }}" class="col-sm-3 col-form-label">Nombre</label>
+        <div class="col-sm-9">
+          {{ form.first_name|add_class:"form-control" }}
+        </div>
+      </div>
+
+      <div class="mb-3 row">
+        <label for="{{ form.last_name.id_for_label }}" class="col-sm-3 col-form-label">Apellidos</label>
+        <div class="col-sm-9">
+          {{ form.last_name|add_class:"form-control" }}
+        </div>
+      </div>
+
+      <!-- Tipo de Usuario -->
+      <div class="mb-3 row">
+        <label for="{{ form.tipo_usuario.id_for_label }}" class="col-sm-3 col-form-label">Tipo de Usuario</label>
+        <div class="col-sm-9">
+          {{ form.tipo_usuario|add_class:"form-select" }}
+          {% if form.tipo_usuario.errors %}
+            <div class="text-danger small">{{ form.tipo_usuario.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mb-3 row">
+        <label class="col-sm-3 col-form-label">Activo</label>
+        <div class="col-sm-9">
+          <div class="form-check">
+            {{ form.is_active|add_class:"form-check-input" }}
+            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Sí</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3 row">
+        <label class="col-sm-3 col-form-label">Es staff</label>
+        <div class="col-sm-9">
+          <div class="form-check">
+            {{ form.is_staff|add_class:"form-check-input" }}
+            <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">Sí</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3 row">
+        <label for="{{ form.password1.id_for_label }}" class="col-sm-3 col-form-label">Contraseña</label>
+        <div class="col-sm-9">
+          {{ form.password1|add_class:"form-control" }}
+          <div class="form-text">Debe tener al menos 8 caracteres.</div>
+        </div>
+      </div>
+
+      <div class="mb-3 row">
+        <label for="{{ form.password2.id_for_label }}" class="col-sm-3 col-form-label">Confirmar contraseña</label>
+        <div class="col-sm-9">
+          {{ form.password2|add_class:"form-control" }}
+        </div>
+      </div>
+
+      {% if form.errors %}
+        <div class="alert alert-danger mt-3">
+          <ul class="mb-0">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <li><strong>{{ field|capfirst }}:</strong> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <div class="d-flex justify-content-end mt-4">
+        <button type="submit" class="btn btn-success me-2">Guardar</button>
+        <a href="{% url 'dashboard:usuarios-list' %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

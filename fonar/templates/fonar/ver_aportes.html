@@ -1,0 +1,48 @@
+{% extends "fonar/base.html" %}
+{% load formato_monedas %}
+{% block title %}Mis Aportes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">💵 Mis Aportes</h2>
+
+    {% if aportes %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle text-center shadow-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Fecha del aporte</th>
+                        <th>Monto</th>
+                        <th>Soporte</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for aporte in aportes %}
+                        <tr>
+                            <td>{{ aporte.fecha_aporte|date:"d/m/Y" }}</td>
+                            <td class="fw-bold text-success">{{ aporte.monto|moneda }}</td>
+                            <td>
+                                {% if aporte.soporte %}
+                                    <a href="{{ aporte.soporte.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        Ver soporte
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Sin soporte</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center shadow-sm">
+            No tienes aportes registrados aún.
+        </div>
+    {% endif %}
+
+    <div class="text-center mt-4">
+        <a href="{% url 'inicio' %}" class="btn btn-secondary">⬅ Volver al inicio</a>
+    </div>
+</div>
+{% endblock %}

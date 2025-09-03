@@ -1,0 +1,179 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="row justify-content-between align-items-center mb-3">
+    <div class="col-md-8 text-start">
+        <h1 class="mb-0">👋 Bienvenido al Panel de Administración</h1>
+        <p class="lead mb-0">Resumen financiero de socios en {{ año_actual }}</p>
+    </div>
+    <div class="col-md-3 text-end">
+        <form method="get">
+            <select name="year" class="form-select mb-2" onchange="this.form.submit()">
+                {% for y in años_disponibles %}
+                    <option value="{{ y }}" {% if y == año_actual %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- 📄 Botón Entregar Fondo -->
+        <a href="{% url 'dashboard:entregar_fondo' %}?year={{ año_actual }}" 
+           class="btn btn-danger w-100" target="_blank">
+            📄 Entregar Fondo
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center mt-3">
+    <div class="col-md-12">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-sm" style="table-layout: auto; width: 100%;">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th style="white-space: nowrap; width: auto;">Nombre</th>
+                        <th style="white-space: nowrap; width: auto;">Correo</th>
+                        <th>Estado</th>
+                        <th>Fecha Ingreso</th>
+                        <th>Total Aportes</th>
+                        <th>Intereses Pagados</th>
+                        <th>Capital Pendiente</th>
+                        <th>% Participación</th>
+                        <th>Días Vinculación</th>
+                        <th>Intereses Ganados</th>
+                        <th>% Rentabilidad</th>
+                        <th>Último Aporte</th>
+                        <th>Estado Mora</th>
+                        <th>Pago Administración</th>
+                        <th>Intereses a Pagar</th>
+                        <th>Total a Pagar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios_data %}
+                    <tr {% if u.nombre == "Terceros" %}class="table-warning fw-bold"{% endif %}>
+                        <td style="white-space: nowrap; width: auto;">{{ u.nombre }}</td>
+                        <td style="white-space: nowrap; width: auto;">{{ u.email }}</td>
+                        <td class="text-center">{{ u.estado_usuario }}</td>
+                        <td class="text-center">
+                            {% if u.fecha_ingreso %}
+                                {{ u.fecha_ingreso|date:"d/m/Y" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td class="text-end">${{ u.total_aportes|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ u.intereses_pagados|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ u.capital_pendiente|floatformat:0|intcomma }}</td>
+                        <td class="text-end">{{ u.participacion|floatformat:0|intcomma }}%</td>
+                        <td class="text-end">{{ u.dias_vinculacion|intcomma }}</td>
+                        <td class="text-end">${{ u.intereses_ganados|floatformat:0|intcomma }}</td>
+                        <td class="text-end">{{ u.rentabilidad|floatformat:0|intcomma }}%</td>
+                        <td class="text-center">
+                            {% if u.ultimo_aporte %}
+                                {{ u.ultimo_aporte|date:"d/m/Y" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-center">{{ u.estado_mora }}</td>
+                        <td class="text-end">${{ u.pago_admin|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ u.intereses_neto|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ u.total_pagar|floatformat:0|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="16" class="text-center">No hay socios con aportes en {{ año_actual }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-secondary fw-bold">
+                    <tr>
+                        <td colspan="4" class="text-center">TOTALES</td>
+                        <td class="text-end">${{ totales.total_aportes|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ totales.intereses_pagados|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ totales.capital_pendiente|floatformat:0|intcomma }}</td>
+                        <td class="text-end">100%</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">${{ totales.intereses_ganados|floatformat:0|intcomma }}</td>
+                        <td class="text-end">-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="text-end">${{ totales.pago_admin|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ totales.intereses_neto|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ totales.total_pagar|floatformat:0|intcomma }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 🔹 Resumen del Fondo -->
+<div class="row mt-4">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                Resumen del Fondo {{ año_actual }}
+            </div>
+            <div class="card-body">
+                <p><strong>Total en el fondo:</strong> ${{ total_en_fondo|floatformat:0|intcomma }}</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <label for="nequi" class="form-label">Nequi</label>
+                        <input type="number" class="form-control text-end" id="nequi" name="nequi" 
+                               step="1" value="{{ balance.nequi|floatformat:0 }}">
+                    </div>
+                    <div class="mb-2">
+                        <label for="efectivo" class="form-label">Efectivo</label>
+                        <input type="number" class="form-control text-end" id="efectivo" name="efectivo" 
+                               step="1" value="{{ balance.efectivo|floatformat:0 }}">
+                    </div>
+                    <div class="mb-2">
+                        <label for="daviplata" class="form-label">Daviplata</label>
+                        <input type="number" class="form-control text-end" id="daviplata" name="daviplata" 
+                               step="1" value="{{ balance.daviplata|floatformat:0 }}">
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="diferencia" class="form-label">Diferencia (Fondo – Cuentas)</label>
+                        <input type="text" class="form-control text-end bg-light" id="diferencia" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="comentarios" class="form-label">Comentarios / Justificación</label>
+                        <textarea class="form-control" id="comentarios" name="comentarios" rows="3">{{ balance.comentarios }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            Última actualización: {{ balance.fecha_modificacion|date:"d/m/Y H:i" }}
+                        </small>
+                        <button type="submit" class="btn btn-primary">Guardar Balance</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calcularDiferencia() {
+        const fondo = {{ total_en_fondo|floatformat:0 }};
+        const nequi = parseFloat(document.getElementById("nequi").value) || 0;
+        const efectivo = parseFloat(document.getElementById("efectivo").value) || 0;
+        const daviplata = parseFloat(document.getElementById("daviplata").value) || 0;
+        const cuentas = nequi + efectivo + daviplata;
+        const diferencia = fondo - cuentas;
+        document.getElementById("diferencia").value = new Intl.NumberFormat("es-CO").format(diferencia);
+    }
+
+    document.querySelectorAll("#nequi, #efectivo, #daviplata").forEach(el => {
+        el.addEventListener("input", calcularDiferencia);
+    });
+
+    calcularDiferencia();
+</script>
+{% endblock %}

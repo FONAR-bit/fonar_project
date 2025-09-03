@@ -1,0 +1,79 @@
+{% extends "fonar/base.html" %}
+{% load static humanize %}
+{% block title %}Inicio - FONAR{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+
+        <!-- Columna izquierda: botones -->
+        <div class="col-md-6 mb-4">
+            <div class="text-center mb-4">
+                <img src="{% static 'images/logo.png' %}" alt="Logo FONAR" style="max-width:250px;">
+            </div>
+
+            <h2 class="mb-4 text-center">Bienvenido, {{ user.username }}</h2>
+
+            <div class="d-grid gap-3">
+                <a href="{% url 'ver_aportes' %}" class="btn btn-outline-primary btn-lg">
+                    Ver mis aportes
+                </a>
+                <a href="{% url 'ver_prestamos' %}" class="btn btn-outline-primary btn-lg">
+                    Ver mis préstamos
+                </a>
+                <a href="{% url 'mis_pagos' %}" class="btn btn-outline-success btn-lg">
+                    Pagos
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-lg">
+                    Cerrar sesión
+                </a>
+            </div>
+        </div>
+
+        <!-- Columna derecha: KPIs -->
+        <div class="col-md-6">
+            <div class="card shadow mb-4 text-center">
+                <div class="card-body">
+                    <h4 class="card-title">Total Aportes</h4>
+                    <p class="display-6 text-primary">
+                        <i class="bi bi-piggy-bank-fill"></i>
+                        ${{ total_aportes|default_if_none:"0"|floatformat:0|intcomma }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="card shadow mb-4 text-center">
+                <div class="card-body">
+                    <h4 class="card-title">Total Préstamos</h4>
+                    <p class="display-6 text-danger">
+                        <i class="bi bi-cash-coin"></i>
+                        ${{ total_prestamos|default_if_none:"0"|floatformat:0|intcomma }}
+                    </p>
+                    <small class="text-muted d-block">(solo capital pendiente)</small>
+                </div>
+            </div>
+
+            <!-- KPI adicional: Diferencia -->
+            <div class="card shadow text-center">
+                <div class="card-body">
+                    <h4 class="card-title">Diferencia (Aportes - Préstamos)</h4>
+                    <p class="display-6">
+                        {% if diferencia >= 0 %}
+                            <span class="text-success">
+                                <i class="bi bi-arrow-up-circle-fill"></i>
+                                ${{ diferencia|default_if_none:"0"|floatformat:0|intcomma }}
+                            </span>
+                        {% else %}
+                            <span class="text-danger">
+                                <i class="bi bi-arrow-down-circle-fill"></i>
+                                ${{ diferencia|default_if_none:"0"|floatformat:0|intcomma }}
+                            </span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Eliminar Pago</h2>
+    <p>¿Seguro que deseas eliminar el pago de <strong>{{ object.usuario }}</strong> 
+       por <strong>${{ object.monto|floatformat:2 }}</strong>?</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">🗑 Eliminar</button>
+        <a href="{% url 'dashboard:pagos-list' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

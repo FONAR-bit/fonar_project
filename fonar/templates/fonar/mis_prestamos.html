@@ -1,0 +1,140 @@
+{% extends "fonar/base.html" %}
+{% load humanize %}
+{% block title %}Mis Préstamos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">💰 Mis Préstamos</h2>
+
+    <div class="accordion" id="accordionPrestamos">
+        {% for data in prestamos_data %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-{{ data.prestamo.id }}">
+                    <button class="accordion-button collapsed" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#collapse-{{ data.prestamo.id }}" 
+                            aria-expanded="false" 
+                            aria-controls="collapse-{{ data.prestamo.id }}">
+                        📄 Préstamo #{{ data.prestamo.id }}
+                        {% if data.saldo_pendiente == 0 %}
+                            <span class="badge bg-success ms-2">Pagado</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark ms-2">Pendiente</span>
+                        {% endif %}
+                    </button>
+                </h2>
+                <div id="collapse-{{ data.prestamo.id }}" 
+                     class="accordion-collapse collapse" 
+                     aria-labelledby="heading-{{ data.prestamo.id }}" 
+                     data-bs-parent="#accordionPrestamos">
+                    <div class="accordion-body">
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p><strong>Monto:</strong> <span class="fw-bold">${{ data.prestamo.monto|intcomma }}</span></p>
+                                <p><strong>Interés mensual:</strong> {{ data.prestamo.interes }}%</p>
+                                <p><strong>Cuotas:</strong> {{ data.prestamo.cuotas }}</p>
+                                <p><strong>Fecha desembolso:</strong> {{ data.prestamo.fecha_desembolso|date:"d/m/Y" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Total pagado:</strong> <span class="text-success fw-bold">${{ data.total_pagado|intcomma }}</span></p>
+                                <p><strong>Saldo pendiente:</strong> 
+                                    {% if data.saldo_pendiente > 0 %}
+                                        <span class="text-danger fw-bold">${{ data.saldo_pendiente|intcomma }}</span>
+                                    {% else %}
+                                        <span class="text-success fw-bold">0</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Botón plan de amortización -->
+                        <button class="btn btn-outline-primary btn-sm mb-3" 
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#amortizacion-{{ data.prestamo.id }}">
+                            📑 Ver Plan de Amortización
+                        </button>
+
+                        <!-- Plan de amortización -->
+                        <div class="collapse" id="amortizacion-{{ data.prestamo.id }}">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped table-hover align-middle text-center">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Cuota</th>
+                                            <th>Fecha</th>
+                                            <th class="text-end">Valor Cuota</th>
+                                            <th class="text-end">Interés</th>
+                                            <th class="text-end">Capital</th>
+                                            <th class="text-end">Saldo</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for cuota in data.cuotas %}
+                                            <tr>
+                                                <td>{{ cuota.numero }}</td>
+                                                <td>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</td>
+                                                <td class="text-end">${{ cuota.monto_cuota|floatformat:0|intcomma }}</td>
+                                                <td class="text-end">${{ cuota.interes|floatformat:0|intcomma }}</td>
+                                                <td class="text-end">${{ cuota.capital|floatformat:0|intcomma }}</td>
+                                                <td class="text-end">${{ cuota.saldo|floatformat:0|intcomma }}</td>
+                                                <td>
+                                                    {% if cuota.pagada %}
+                                                        <span class="badge bg-success">
+                                                            Pagada {{ cuota.fecha_pago|date:"d/m/Y" }}
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Pendiente</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Pagos Realizados -->
+                        <h6 class="mt-4">📌 Pagos Realizados</h6>
+                        {% if data.pagos %}
+                            <button class="btn btn-outline-success btn-sm mb-2"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#pagos-{{ data.prestamo.id }}">
+                                💵 Ver Pagos Realizados ({{ data.pagos|length }})
+                            </button>
+
+                            <div class="collapse" id="pagos-{{ data.prestamo.id }}">
+                                <ul class="list-group">
+                                    {% for pago in data.pagos %}
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>💵 ${{ pago.monto_pagado|intcomma }}</span>
+                                            <small class="text-muted">{{ pago.fecha_pago|date:"d/m/Y" }}</small>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Aún no hay pagos registrados.</p>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-info text-center">
+                No tienes préstamos registrados.
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="text-end mt-3">
+        <a href="{% url 'solicitar_prestamo' %}" class="btn btn-success me-2">➕ Solicitar Crédito </a>
+        <a href="{% url 'mis_solicitudes' %}" class="btn btn-outline-primary me-2"> 📑 Ver Mis Solicitudes </a>
+        <a href="{% url 'inicio' %}" class="btn btn-sm btn-secondary">⬅ Volver</a>
+    </div>
+</div>
+{% endblock %}

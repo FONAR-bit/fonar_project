@@ -1,0 +1,16 @@
+{% extends "dashboard/base.html" %}
+{% load formato_monedas %}
+{% block content %}
+<h2 class="mb-4">Eliminar Préstamo</h2>
+
+<div class="alert alert-danger">
+    ¿Estás seguro de que deseas eliminar el préstamo de
+    <strong>{{ object.usuario.username }}</strong> por {{ object.monto|moneda }}?
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+    <a href="{% url 'dashboard:prestamos-list' %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+<h2 class="mb-4">Solicitudes de Préstamo</h2>
+
+<div class="card">
+    <div class="card-body">
+
+        <!-- 🔎 Formulario de filtros -->
+        <form method="get" class="row g-3 mb-3">
+            <!-- Buscar por usuario -->
+            <div class="col-md-3">
+                <input type="text" name="usuario" class="form-control"
+                       placeholder="Buscar por usuario..." value="{{ request.GET.usuario }}">
+            </div>
+
+            <!-- Filtrar por estado -->
+            <div class="col-md-3">
+                <select name="estado" class="form-select">
+                    <option value="">-- Estado --</option>
+                    <option value="pendiente" {% if request.GET.estado == "pendiente" %}selected{% endif %}>Pendiente</option>
+                    <option value="aprobado" {% if request.GET.estado == "aprobado" %}selected{% endif %}>Aprobado</option>
+                    <option value="rechazado" {% if request.GET.estado == "rechazado" %}selected{% endif %}>Rechazado</option>
+                </select>
+            </div>
+
+            <!-- Rango de fechas -->
+            <div class="col-md-3">
+                <input type="date" name="fecha_inicio" class="form-control"
+                       value="{{ request.GET.fecha_inicio }}">
+            </div>
+            <div class="col-md-3">
+                <input type="date" name="fecha_fin" class="form-control"
+                       value="{{ request.GET.fecha_fin }}">
+            </div>
+
+            <!-- Botón filtrar -->
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+
+            <!-- Botón limpiar -->
+            <div class="col-md-2">
+                <a href="{% url 'dashboard:solicitudes-list' %}" class="btn btn-secondary w-100">Limpiar</a>
+            </div>
+        </form>
+
+        <!-- Tabla de solicitudes -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Monto</th>
+                        <th>Cuotas</th>
+                        <th>Interés</th>
+                        <th>Estado</th>
+                        <th>Fecha solicitud</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for solicitud in object_list %}
+                    <tr>
+                        <td>{{ solicitud.id }}</td>
+                        <td>{{ solicitud.usuario.username }}</td>
+                        <td>{{ solicitud.monto }}</td>
+                        <td>{{ solicitud.cuotas }}</td>
+                        <td>{{ solicitud.interes }}%</td>
+                        <td>{{ solicitud.estado }}</td>
+                        <td>{{ solicitud.fecha_solicitud|date:"d/m/Y" }}</td>
+                        <td>
+                            <a href="{% url 'dashboard:solicitudes-update' solicitud.id %}" class="btn btn-sm btn-primary">Editar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">No hay solicitudes registradas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
