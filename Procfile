@@ -1,1 +1,1 @@
-web: gunicorn fonar_project.wsgi
+web: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn fonar_project.wsgi
