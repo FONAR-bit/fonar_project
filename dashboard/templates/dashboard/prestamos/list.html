@@ -8,7 +8,7 @@
 <div class="card">
     <div class="card-body">
         <!-- 🔎 Formulario de filtros -->
-        <form method="get" class="row g-3 mb-4">
+        <form method="get" class="row g-3 mb-3">
 
             <!-- Buscar por usuario -->
             <div class="col-md-3">
@@ -49,36 +49,48 @@
             </div>
         </form>
 
-        <!-- 🟦 Sección: Préstamos Vigentes -->
-        <div class="mb-4">
-            <h5>
-                <a class="btn btn-outline-primary" data-bs-toggle="collapse" href="#vigentesCollapse" role="button" aria-expanded="true" aria-controls="vigentesCollapse">
-                    📌 Préstamos Vigentes ({{ prestamos_vigentes|length }})
-                </a>
-            </h5>
-            <div class="collapse show" id="vigentesCollapse">
-                {% include "dashboard/prestamos/tabla_prestamos.html" with prestamos=prestamos_vigentes %}
-            </div>
+        <!-- Tabla de préstamos -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Fecha Desembolso</th>
+                        <th class="text-end">Monto</th>
+                        <th class="text-end">Interés (%)</th>
+                        <th class="text-end">Cuotas</th>
+                        <th class="text-end">Saldo Pendiente</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prestamo in prestamos %}
+                        <tr>
+                            <td>{{ prestamo.id }}</td>
+                            <td>{{ prestamo.usuario.username }}</td>
+                            <td>{{ prestamo.fecha_desembolso|date:"d/m/Y" }}</td>
+                            <td class="text-end">{{ prestamo.monto|moneda }}</td>
+                            <td class="text-end">{{ prestamo.interes }}</td>
+                            <td class="text-end">{{ prestamo.cuotas }}</td>
+                            <td class="text-end">{{ prestamo.capital_pendiente|moneda }}</td>
+                            <td>
+                                <a href="{% url 'dashboard:prestamos-detail' prestamo.id %}" class="btn btn-sm btn-info">👁</a>
+                                <a href="{% url 'dashboard:prestamos-update' prestamo.id %}" class="btn btn-sm btn-primary">✏️</a>
+                                <a href="{% url 'dashboard:prestamos-delete' prestamo.id %}" class="btn btn-sm btn-danger">🗑</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="8" class="text-center">No se encontraron préstamos registrados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
 
-        <!-- ✅ Sección: Préstamos Pagados -->
-        <div class="mb-4">
-            <h5>
-                <a class="btn btn-outline-success" data-bs-toggle="collapse" href="#pagadosCollapse" role="button" aria-expanded="false" aria-controls="pagadosCollapse">
-                    ✅ Préstamos Pagados ({{ prestamos_pagados|length }})
-                </a>
-            </h5>
-            <div class="collapse" id="pagadosCollapse">
-                {% include "dashboard/prestamos/tabla_prestamos.html" with prestamos=prestamos_pagados %}
-            </div>
-        </div>
+        <a href="{% url 'dashboard:prestamos-create' %}" class="btn btn-success mt-3">➕ Registrar Préstamo</a>
+        <a href="{% url 'dashboard:tasas-list' %}" class="btn btn-secondary mt-3">📊 Ver Tasas de Interés</a>
+        <a href="{% url 'dashboard:solicitudes-list' %}" class="btn btn-warning mt-3">📑 Ver Solicitudes de Crédito</a>
 
-        <!-- Acciones -->
-        <div class="mt-4">
-            <a href="{% url 'dashboard:prestamos-create' %}" class="btn btn-success">➕ Registrar Préstamo</a>
-            <a href="{% url 'dashboard:tasas-list' %}" class="btn btn-secondary">📊 Ver Tasas de Interés</a>
-            <a href="{% url 'dashboard:solicitudes-list' %}" class="btn btn-warning">📑 Ver Solicitudes de Crédito</a>
-        </div>
     </div>
 </div>
 {% endblock %}
