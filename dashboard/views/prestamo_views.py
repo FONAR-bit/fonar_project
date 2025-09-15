@@ -5,38 +5,49 @@ from django.db import transaction
 from fonar.models import Prestamo, CuotaPrestamo
 from dashboard.forms import PrestamoForm
 
+
 class PrestamoListView(ListView):
     model = Prestamo
     template_name = "dashboard/prestamos/list.html"
-    context_object_name = "prestamos"
-    paginate_by = 10
+    paginate_by = 10  # Aún puedes paginar manualmente si quieres
 
     def get_queryset(self):
+        # Ya no lo usaremos directamente, pero lo dejamos por compatibilidad
+        return Prestamo.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Base queryset con relaciones y orden
         qs = Prestamo.objects.select_related("usuario").order_by("-fecha_desembolso")
 
+        # 🧪 Filtros
         usuario = self.request.GET.get("usuario")
         fecha_inicio = self.request.GET.get("fecha_inicio")
         fecha_fin = self.request.GET.get("fecha_fin")
         monto_min = self.request.GET.get("monto_min")
         monto_max = self.request.GET.get("monto_max")
 
-        # 🔎 Filtro por usuario
         if usuario:
             qs = qs.filter(usuario__username__icontains=usuario)
-
-        # 🔎 Filtro por rango de fechas
         if fecha_inicio:
             qs = qs.filter(fecha_desembolso__gte=fecha_inicio)
         if fecha_fin:
             qs = qs.filter(fecha_desembolso__lte=fecha_fin)
-
-        # 🔎 Filtro por rango de montos
         if monto_min:
             qs = qs.filter(monto__gte=monto_min)
         if monto_max:
             qs = qs.filter(monto__lte=monto_max)
 
-        return qs
+        # 🔀 Separar en vigentes y pagados
+        context["prestamos_vigentes"] = qs.filter(capital_pendiente__gt=0)
+        context["prestamos_pagados"] = qs.filter(capital_pendiente=0)
+
+        # Para mantener los filtros en la plantilla si los necesitas
+        context["request"] = self.request
+
+        return context
+
 
 class PrestamoDetailView(DetailView):
     model = Prestamo
@@ -57,9 +68,10 @@ class PrestamoCreateView(CreateView):
 
     def form_valid(self, form):
         with transaction.atomic():
-            response = super().form_valid(form)  # el modelo se encarga de generar cuotas
+            response = super().form_valid(form)  # El modelo se encarga de generar cuotas
             messages.success(self.request, "✅ Préstamo creado con sus cuotas.")
             return response
+
 
 class PrestamoUpdateView(UpdateView):
     model = Prestamo
