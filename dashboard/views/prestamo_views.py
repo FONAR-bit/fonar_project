@@ -19,7 +19,6 @@ class PrestamoListView(ListView):
         fecha_fin = self.request.GET.get("fecha_fin")
         monto_min = self.request.GET.get("monto_min")
         monto_max = self.request.GET.get("monto_max")
-        estado = self.request.GET.get("estado")
 
         # 🔎 Filtro por usuario
         if usuario:
@@ -37,13 +36,23 @@ class PrestamoListView(ListView):
         if monto_max:
             qs = qs.filter(monto__lte=monto_max)
 
-        # Filtro por estado (vigentes o pagados)
-        if estado == "vigentes":
-            qs = [p for p in qs if p.capital_pendiente > 0]
-        elif estado == "pagados":
-            qs = [p for p in qs if p.capital_pendiente == 0]
-
         return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        estado = self.request.GET.get("estado")
+
+        # Filtro por estado (vigentes o pagados) aplicado en la página actual sin romper paginación
+        if estado in ["vigentes", "pagados"]:
+            page_obj = context["prestamos"]
+            prestamos_filtrados = [
+                p for p in page_obj.object_list
+                if (p.capital_pendiente > 0 if estado == "vigentes" else p.capital_pendiente == 0)
+            ]
+            context["prestamos"].object_list = prestamos_filtrados
+
+        return context
+
 
 class PrestamoDetailView(DetailView):
     model = Prestamo
