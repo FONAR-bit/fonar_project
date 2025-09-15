@@ -9,19 +9,12 @@ from dashboard.forms import PrestamoForm
 class PrestamoListView(ListView):
     model = Prestamo
     template_name = "dashboard/prestamos/list.html"
-    paginate_by = 10  # Aún puedes paginar manualmente si quieres
+    context_object_name = "prestamos"  # para que la plantilla reciba 'prestamos'
+    paginate_by = 10
 
     def get_queryset(self):
-        # Ya no lo usaremos directamente, pero lo dejamos por compatibilidad
-        return Prestamo.objects.none()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # Base queryset con relaciones y orden
         qs = Prestamo.objects.select_related("usuario").order_by("-fecha_desembolso")
 
-        # 🧪 Filtros
         usuario = self.request.GET.get("usuario")
         fecha_inicio = self.request.GET.get("fecha_inicio")
         fecha_fin = self.request.GET.get("fecha_fin")
@@ -39,13 +32,17 @@ class PrestamoListView(ListView):
         if monto_max:
             qs = qs.filter(monto__lte=monto_max)
 
-        # 🔀 Separar en vigentes y pagados
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        qs = context["prestamos"]  # queryset paginado y filtrado
+
+        # Separar en vigentes y pagados según capital pendiente
         context["prestamos_vigentes"] = qs.filter(capital_pendiente__gt=0)
         context["prestamos_pagados"] = qs.filter(capital_pendiente=0)
 
-        # Para mantener los filtros en la plantilla si los necesitas
         context["request"] = self.request
-
         return context
 
 
