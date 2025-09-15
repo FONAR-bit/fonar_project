@@ -19,6 +19,7 @@ class PrestamoListView(ListView):
         fecha_fin = self.request.GET.get("fecha_fin")
         monto_min = self.request.GET.get("monto_min")
         monto_max = self.request.GET.get("monto_max")
+        estado = self.request.GET.get("estado")
 
         # 🔎 Filtro por usuario
         if usuario:
