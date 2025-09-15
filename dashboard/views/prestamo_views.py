@@ -44,12 +44,14 @@ class PrestamoListView(ListView):
 
         # Filtro por estado (vigentes o pagados) aplicado en la página actual sin romper paginación
         if estado in ["vigentes", "pagados"]:
-            page_obj = context["prestamos"]
-            prestamos_filtrados = [
-                p for p in page_obj.object_list
-                if (p.capital_pendiente > 0 if estado == "vigentes" else p.capital_pendiente == 0)
-            ]
-            context["prestamos"].object_list = prestamos_filtrados
+            page_obj = context.get("page_obj")
+            if page_obj:
+                prestamos_filtrados = [
+                    p for p in page_obj.object_list
+                    if (p.capital_pendiente > 0 if estado == "vigentes" else p.capital_pendiente == 0)
+                ]
+                # Reemplazamos la lista de prestamos con la filtrada para la vista
+                context["prestamos"] = prestamos_filtrados
 
         return context
 
