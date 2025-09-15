@@ -36,6 +36,12 @@ class PrestamoListView(ListView):
         if monto_max:
             qs = qs.filter(monto__lte=monto_max)
 
+        # Filtrar por estado (vigentes o pagados)
+        if estado == "vigentes":
+            qs = qs.filter(capital_pendiente__gt=0)
+        elif estado == "pagados":
+            qs = qs.filter(capital_pendiente=0)
+
         return qs
 
 class PrestamoDetailView(DetailView):

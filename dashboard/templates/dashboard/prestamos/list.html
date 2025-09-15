@@ -38,6 +38,15 @@
                        placeholder="Monto máx." value="{{ request.GET.monto_max }}">
             </div>
 
+            <!-- Filtro por estado -->
+            <div class="col-md-3">
+                <select name="estado" class="form-select">
+                    <option value="">-- Estado --</option>
+                    <option value="vigentes" {% if request.GET.estado == 'vigentes' %}selected{% endif %}>Vigentes</option>
+                    <option value="pagados" {% if request.GET.estado == 'pagados' %}selected{% endif %}>Pagados</option>
+                </select>
+            </div>
+
             <!-- Botón filtrar -->
             <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100">Filtrar</button>
@@ -86,6 +95,47 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Paginación -->
+        <nav aria-label="Page navigation example">
+            <ul class="pagination justify-content-center">
+
+                {% if prestamos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ prestamos.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&laquo;</span>
+                    </li>
+                {% endif %}
+
+                {% for num in prestamos.paginator.page_range %}
+                    {% if num == prestamos.number %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if prestamos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ prestamos.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&raquo;</span>
+                    </li>
+                {% endif %}
+
+            </ul>
+        </nav>
 
         <a href="{% url 'dashboard:prestamos-create' %}" class="btn btn-success mt-3">➕ Registrar Préstamo</a>
         <a href="{% url 'dashboard:tasas-list' %}" class="btn btn-secondary mt-3">📊 Ver Tasas de Interés</a>
