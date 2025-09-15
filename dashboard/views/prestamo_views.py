@@ -20,17 +20,14 @@ class PrestamoListView(ListView):
         monto_min = self.request.GET.get("monto_min")
         monto_max = self.request.GET.get("monto_max")
 
-        # 🔎 Filtro por usuario
         if usuario:
             qs = qs.filter(usuario__username__icontains=usuario)
 
-        # 🔎 Filtro por rango de fechas
         if fecha_inicio:
             qs = qs.filter(fecha_desembolso__gte=fecha_inicio)
         if fecha_fin:
             qs = qs.filter(fecha_desembolso__lte=fecha_fin)
 
-        # 🔎 Filtro por rango de montos
         if monto_min:
             qs = qs.filter(monto__gte=monto_min)
         if monto_max:
@@ -42,16 +39,17 @@ class PrestamoListView(ListView):
         context = super().get_context_data(**kwargs)
         estado = self.request.GET.get("estado")
 
-        # Filtro por estado (vigentes o pagados) aplicado en la página actual sin romper paginación
+        # Filtrar solo la página actual sin romper paginación
         if estado in ["vigentes", "pagados"]:
             page_obj = context.get("page_obj")
             if page_obj:
-                prestamos_filtrados = [
+                prestamos_filtrados_estado = [
                     p for p in page_obj.object_list
                     if (p.capital_pendiente > 0 if estado == "vigentes" else p.capital_pendiente == 0)
                 ]
-                # Reemplazamos la lista de prestamos con la filtrada para la vista
-                context["prestamos"] = prestamos_filtrados
+                context["prestamos_filtrados_estado"] = prestamos_filtrados_estado
+        else:
+            context["prestamos_filtrados_estado"] = None
 
         return context
 
@@ -75,7 +73,7 @@ class PrestamoCreateView(CreateView):
 
     def form_valid(self, form):
         with transaction.atomic():
-            response = super().form_valid(form)  # el modelo se encarga de generar cuotas
+            response = super().form_valid(form)
             messages.success(self.request, "✅ Préstamo creado con sus cuotas.")
             return response
 

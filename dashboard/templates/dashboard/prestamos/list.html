@@ -74,24 +74,45 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for prestamo in prestamos %}
-                        <tr>
-                            <td>{{ prestamo.id }}</td>
-                            <td>{{ prestamo.usuario.username }}</td>
-                            <td>{{ prestamo.fecha_desembolso|date:"d/m/Y" }}</td>
-                            <td class="text-end">{{ prestamo.monto|moneda }}</td>
-                            <td class="text-end">{{ prestamo.interes }}</td>
-                            <td class="text-end">{{ prestamo.cuotas }}</td>
-                            <td class="text-end">{{ prestamo.capital_pendiente|moneda }}</td>
-                            <td>
-                                <a href="{% url 'dashboard:prestamos-detail' prestamo.id %}" class="btn btn-sm btn-info">👁</a>
-                                <a href="{% url 'dashboard:prestamos-update' prestamo.id %}" class="btn btn-sm btn-primary">✏️</a>
-                                <a href="{% url 'dashboard:prestamos-delete' prestamo.id %}" class="btn btn-sm btn-danger">🗑</a>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="8" class="text-center">No se encontraron préstamos registrados.</td></tr>
-                    {% endfor %}
+                    {% if prestamos_filtrados_estado %}
+                        {% for prestamo in prestamos_filtrados_estado %}
+                            <tr>
+                                <td>{{ prestamo.id }}</td>
+                                <td>{{ prestamo.usuario.username }}</td>
+                                <td>{{ prestamo.fecha_desembolso|date:"d/m/Y" }}</td>
+                                <td class="text-end">{{ prestamo.monto|moneda }}</td>
+                                <td class="text-end">{{ prestamo.interes }}</td>
+                                <td class="text-end">{{ prestamo.cuotas }}</td>
+                                <td class="text-end">{{ prestamo.capital_pendiente|moneda }}</td>
+                                <td>
+                                    <a href="{% url 'dashboard:prestamos-detail' prestamo.id %}" class="btn btn-sm btn-info">👁</a>
+                                    <a href="{% url 'dashboard:prestamos-update' prestamo.id %}" class="btn btn-sm btn-primary">✏️</a>
+                                    <a href="{% url 'dashboard:prestamos-delete' prestamo.id %}" class="btn btn-sm btn-danger">🗑</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="8" class="text-center">No se encontraron préstamos registrados.</td></tr>
+                        {% endfor %}
+                    {% else %}
+                        {% for prestamo in prestamos %}
+                            <tr>
+                                <td>{{ prestamo.id }}</td>
+                                <td>{{ prestamo.usuario.username }}</td>
+                                <td>{{ prestamo.fecha_desembolso|date:"d/m/Y" }}</td>
+                                <td class="text-end">{{ prestamo.monto|moneda }}</td>
+                                <td class="text-end">{{ prestamo.interes }}</td>
+                                <td class="text-end">{{ prestamo.cuotas }}</td>
+                                <td class="text-end">{{ prestamo.capital_pendiente|moneda }}</td>
+                                <td>
+                                    <a href="{% url 'dashboard:prestamos-detail' prestamo.id %}" class="btn btn-sm btn-info">👁</a>
+                                    <a href="{% url 'dashboard:prestamos-update' prestamo.id %}" class="btn btn-sm btn-primary">✏️</a>
+                                    <a href="{% url 'dashboard:prestamos-delete' prestamo.id %}" class="btn btn-sm btn-danger">🗑</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="8" class="text-center">No se encontraron préstamos registrados.</td></tr>
+                        {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>
