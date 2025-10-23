@@ -117,13 +117,16 @@
             </table>
         </div>
 
-        <!-- Paginación -->
+        <!-- Paginación (FIX: usa page_obj/paginator y preserva filtros) -->
+        {% if is_paginated %}
         <nav aria-label="Page navigation example">
             <ul class="pagination justify-content-center">
 
-                {% if prestamos.has_previous %}
+                {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ prestamos.previous_page_number }}" aria-label="Previous">
+                        <a class="page-link"
+                           href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}"
+                           aria-label="Anterior">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
@@ -133,19 +136,22 @@
                     </li>
                 {% endif %}
 
-                {% for num in prestamos.paginator.page_range %}
-                    {% if num == prestamos.number %}
+                {% for num in paginator.page_range %}
+                    {% if num == page_obj.number %}
                         <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                            <a class="page-link"
+                               href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
 
-                {% if prestamos.has_next %}
+                {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ prestamos.next_page_number }}" aria-label="Next">
+                        <a class="page-link"
+                           href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}"
+                           aria-label="Siguiente">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
                     </li>
@@ -157,6 +163,7 @@
 
             </ul>
         </nav>
+        {% endif %}
 
         <a href="{% url 'dashboard:prestamos-create' %}" class="btn btn-success mt-3">➕ Registrar Préstamo</a>
         <a href="{% url 'dashboard:tasas-list' %}" class="btn btn-secondary mt-3">📊 Ver Tasas de Interés</a>
