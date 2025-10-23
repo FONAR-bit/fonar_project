@@ -6,169 +6,201 @@
 <h2 class="mb-4">Préstamos Registrados</h2>
 
 <div class="card">
-    <div class="card-body">
-        <!-- 🔎 Formulario de filtros -->
-        <form method="get" class="row g-3 mb-3">
+  <div class="card-body">
 
-            <!-- Buscar por usuario -->
-            <div class="col-md-3">
-                <input type="text" name="usuario" class="form-control"
-                       placeholder="Buscar por usuario..." value="{{ request.GET.usuario }}">
-            </div>
+    <!-- 🔎 Formulario de filtros -->
+    <form method="get" class="row g-3 mb-3">
 
-            <!-- Rango de fechas -->
-            <div class="col-md-3">
-                <input type="date" name="fecha_inicio" class="form-control"
-                       value="{{ request.GET.fecha_inicio }}">
-            </div>
-            <div class="col-md-3">
-                <input type="date" name="fecha_fin" class="form-control"
-                       value="{{ request.GET.fecha_fin }}">
-            </div>
+      <!-- Buscar por usuario -->
+      <div class="col-md-3">
+        <input type="text" name="usuario" class="form-control"
+               placeholder="Buscar por usuario..." value="{{ request.GET.usuario }}">
+      </div>
 
-            <!-- Monto mínimo -->
-            <div class="col-md-2">
-                <input type="number" name="monto_min" class="form-control"
-                       placeholder="Monto mín." value="{{ request.GET.monto_min }}">
-            </div>
+      <!-- Rango de fechas -->
+      <div class="col-md-3">
+        <input type="date" name="fecha_inicio" class="form-control"
+               value="{{ request.GET.fecha_inicio }}">
+      </div>
+      <div class="col-md-3">
+        <input type="date" name="fecha_fin" class="form-control"
+               value="{{ request.GET.fecha_fin }}">
+      </div>
 
-            <!-- Monto máximo -->
-            <div class="col-md-2">
-                <input type="number" name="monto_max" class="form-control"
-                       placeholder="Monto máx." value="{{ request.GET.monto_max }}">
-            </div>
+      <!-- Monto mínimo -->
+      <div class="col-md-2">
+        <input type="number" name="monto_min" class="form-control"
+               placeholder="Monto mín." value="{{ request.GET.monto_min }}">
+      </div>
 
-            <!-- Filtro por estado -->
-            <div class="col-md-3">
-                <select name="estado" class="form-select">
-                    <option value="">-- Estado --</option>
-                    <option value="vigentes" {% if request.GET.estado == 'vigentes' %}selected{% endif %}>Vigentes</option>
-                    <option value="pagados" {% if request.GET.estado == 'pagados' %}selected{% endif %}>Pagados</option>
-                </select>
-            </div>
+      <!-- Monto máximo -->
+      <div class="col-md-2">
+        <input type="number" name="monto_max" class="form-control"
+               placeholder="Monto máx." value="{{ request.GET.monto_max }}">
+      </div>
 
-            <!-- Botón filtrar -->
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-            </div>
+      <!-- Filtro por estado (opcional; si lo usas, la vista ya lo respeta) -->
+      <div class="col-md-3">
+        <select name="estado" class="form-select">
+          <option value="">-- Estado --</option>
+          <option value="vigentes" {% if request.GET.estado == 'vigentes' %}selected{% endif %}>Vigentes</option>
+          <option value="pagados"  {% if request.GET.estado == 'pagados' %}selected{% endif %}>Pagados</option>
+        </select>
+      </div>
 
-            <!-- Botón limpiar -->
-            <div class="col-md-2">
-                <a href="{% url 'dashboard:prestamos-list' %}" class="btn btn-secondary w-100">Limpiar</a>
-            </div>
-        </form>
-
-        <!-- Tabla de préstamos -->
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Usuario</th>
-                        <th>Fecha Desembolso</th>
-                        <th class="text-end">Monto</th>
-                        <th class="text-end">Interés (%)</th>
-                        <th class="text-end">Cuotas</th>
-                        <th class="text-end">Saldo Pendiente</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% if prestamos_filtrados_estado %}
-                        {% for prestamo in prestamos_filtrados_estado %}
-                            <tr>
-                                <td>{{ prestamo.id }}</td>
-                                <td>{{ prestamo.usuario.username }}</td>
-                                <td>{{ prestamo.fecha_desembolso|date:"d/m/Y" }}</td>
-                                <td class="text-end">{{ prestamo.monto|moneda }}</td>
-                                <td class="text-end">{{ prestamo.interes }}</td>
-                                <td class="text-end">{{ prestamo.cuotas }}</td>
-                                <td class="text-end">{{ prestamo.capital_pendiente|moneda }}</td>
-                                <td>
-                                    <a href="{% url 'dashboard:prestamos-detail' prestamo.id %}" class="btn btn-sm btn-info">👁</a>
-                                    <a href="{% url 'dashboard:prestamos-update' prestamo.id %}" class="btn btn-sm btn-primary">✏️</a>
-                                    <a href="{% url 'dashboard:prestamos-delete' prestamo.id %}" class="btn btn-sm btn-danger">🗑</a>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr><td colspan="8" class="text-center">No se encontraron préstamos registrados.</td></tr>
-                        {% endfor %}
-                    {% else %}
-                        {% for prestamo in prestamos %}
-                            <tr>
-                                <td>{{ prestamo.id }}</td>
-                                <td>{{ prestamo.usuario.username }}</td>
-                                <td>{{ prestamo.fecha_desembolso|date:"d/m/Y" }}</td>
-                                <td class="text-end">{{ prestamo.monto|moneda }}</td>
-                                <td class="text-end">{{ prestamo.interes }}</td>
-                                <td class="text-end">{{ prestamo.cuotas }}</td>
-                                <td class="text-end">{{ prestamo.capital_pendiente|moneda }}</td>
-                                <td>
-                                    <a href="{% url 'dashboard:prestamos-detail' prestamo.id %}" class="btn btn-sm btn-info">👁</a>
-                                    <a href="{% url 'dashboard:prestamos-update' prestamo.id %}" class="btn btn-sm btn-primary">✏️</a>
-                                    <a href="{% url 'dashboard:prestamos-delete' prestamo.id %}" class="btn btn-sm btn-danger">🗑</a>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr><td colspan="8" class="text-center">No se encontraron préstamos registrados.</td></tr>
-                        {% endfor %}
-                    {% endif %}
-                </tbody>
-            </table>
+      <!-- Mostrar histórico: incluye préstamos con saldo 0 -->
+      <div class="col-md-3 d-flex align-items-center">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="historico" name="historico" value="1"
+                 {% if historico %}checked{% endif %}>
+          <label class="form-check-label" for="historico">
+            Mostrar histórico (incluir saldo 0)
+          </label>
         </div>
+      </div>
 
-        <!-- Paginación (FIX: usa page_obj/paginator y preserva filtros) -->
-        {% if is_paginated %}
-        <nav aria-label="Page navigation example">
-            <ul class="pagination justify-content-center">
+      <!-- Botón filtrar -->
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+      </div>
 
-                {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link"
-                           href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}"
-                           aria-label="Anterior">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">&laquo;</span>
-                    </li>
-                {% endif %}
+      <!-- Botón limpiar -->
+      <div class="col-md-2">
+        <a href="{% url 'dashboard:prestamos-list' %}" class="btn btn-secondary w-100">Limpiar</a>
+      </div>
+    </form>
 
-                {% for num in paginator.page_range %}
-                    {% if num == page_obj.number %}
-                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                    {% else %}
-                        <li class="page-item">
-                            <a class="page-link"
-                               href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
-                        </li>
-                    {% endif %}
-                {% endfor %}
+    <!-- 🧾 Tabla agrupada por usuario -->
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width:50px;"></th>
+            <th>Usuario</th>
+            <th class="text-end">Saldo pendiente acumulado</th>
+            <th class="text-center">Créditos pendientes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for grupo in users_page.object_list %}
+          {% with user=grupo.usuario %}
+          <tr>
+            <!-- Botón de expansión -->
+            <td>
+              <button class="btn btn-sm btn-outline-secondary" type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#u{{ user.id }}_prestamos"
+                      aria-expanded="false"
+                      aria-controls="u{{ user.id }}_prestamos">
+                ▾
+              </button>
+            </td>
 
-                {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link"
-                           href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}"
-                           aria-label="Siguiente">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">&raquo;</span>
-                    </li>
-                {% endif %}
+            <td>
+              <div class="fw-semibold">{{ user.get_full_name|default:user.username }}</div>
+              <div class="text-muted small">{{ user.email }}</div>
+            </td>
 
-            </ul>
-        </nav>
-        {% endif %}
+            <td class="text-end">{{ grupo.saldo_total|moneda }}</td>
 
-        <a href="{% url 'dashboard:prestamos-create' %}" class="btn btn-success mt-3">➕ Registrar Préstamo</a>
-        <a href="{% url 'dashboard:tasas-list' %}" class="btn btn-secondary mt-3">📊 Ver Tasas de Interés</a>
-        <a href="{% url 'dashboard:solicitudes-list' %}" class="btn btn-warning mt-3">📑 Ver Solicitudes de Crédito</a>
+            <td class="text-center">
+              {% if grupo.pendientes_count > 0 %}
+                <span class="badge bg-warning text-dark">{{ grupo.pendientes_count }}</span>
+              {% else %}
+                <span class="badge bg-success">0</span>
+              {% endif %}
+            </td>
 
+            <td class="text-end"><!-- Acciones por usuario (si las agregas a futuro) --></td>
+          </tr>
+
+          <!-- Detalle de préstamos del usuario (colapsable) -->
+          <tr class="collapse" id="u{{ user.id }}_prestamos">
+            <td></td>
+            <td colspan="4">
+              <div class="table-responsive">
+                <table class="table table-sm table-bordered align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>ID</th>
+                      <th>Fecha Desembolso</th>
+                      <th class="text-end">Monto</th>
+                      <th class="text-end">Interés (%)</th>
+                      <th class="text-end">Cuotas</th>
+                      <th class="text-end">Saldo Pendiente</th>
+                      <th class="text-end">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for prestamo in grupo.prestamos %}
+                      <tr>
+                        <td>{{ prestamo.id }}</td>
+                        <td>{{ prestamo.fecha_desembolso|date:"d/m/Y" }}</td>
+                        <td class="text-end">{{ prestamo.monto|moneda }}</td>
+                        <td class="text-end">{{ prestamo.interes }}</td>
+                        <td class="text-end">{{ prestamo.cuotas }}</td>
+                        <td class="text-end">{{ prestamo.capital_pendiente|moneda }}</td>
+                        <td class="text-end">
+                          <div class="btn-group btn-group-sm">
+                            <a href="{% url 'dashboard:prestamos-detail' prestamo.id %}" class="btn btn-outline-info">👁</a>
+                            <a href="{% url 'dashboard:prestamos-update' prestamo.id %}" class="btn btn-outline-primary">✏️</a>
+                            <a href="{% url 'dashboard:prestamos-delete' prestamo.id %}" class="btn btn-outline-danger">🗑</a>
+                          </div>
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr><td colspan="7" class="text-center text-muted">Sin préstamos para mostrar.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </td>
+          </tr>
+          {% endwith %}
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted">No hay resultados con los filtros actuales.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+
+    <!-- 📄 Paginación por usuarios (grupos) -->
+    {% if is_paginated_users %}
+    <nav aria-label="Paginación">
+      <ul class="pagination justify-content-center">
+        {% with query=request.GET.urlencode %}
+          {% if users_page.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page=1&{{ query }}">« Primero</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ users_page.previous_page_number }}&{{ query }}">‹ Anterior</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">« Primero</span></li>
+            <li class="page-item disabled"><span class="page-link">‹ Anterior</span></li>
+          {% endif %}
+
+          <li class="page-item active">
+            <span class="page-link">{{ users_page.number }} / {{ users_page.paginator.num_pages }}</span>
+          </li>
+
+          {% if users_page.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ users_page.next_page_number }}&{{ query }}">Siguiente ›</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ users_page.paginator.num_pages }}&{{ query }}">Última »</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Siguiente ›</span></li>
+            <li class="page-item disabled"><span class="page-link">Última »</span></li>
+          {% endif %}
+        {% endwith %}
+      </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Botones inferiores -->
+    <a href="{% url 'dashboard:prestamos-create' %}" class="btn btn-success mt-3">➕ Registrar Préstamo</a>
+    <a href="{% url 'dashboard:tasas-list' %}" class="btn btn-secondary mt-3">📊 Ver Tasas de Interés</a>
+    <a href="{% url 'dashboard:solicitudes-list' %}" class="btn btn-warning mt-3">📑 Ver Solicitudes de Crédito</a>
+
+  </div>
 </div>
 {% endblock %}
