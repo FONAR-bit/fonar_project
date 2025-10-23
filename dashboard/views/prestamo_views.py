@@ -11,12 +11,12 @@ class PrestamoListView(ListView):
     model = Prestamo
     template_name = "dashboard/prestamos/list.html"
     context_object_name = "prestamos"
-    paginate_by = 10  # seguirá aplicando para la paginación clásica (por préstamos)
+    paginate_by = 10  # paginación clásica (por préstamos) que usa ListView
 
     def get_queryset(self):
         """
-        Filtros originales (usuario, fechas, montos) + soporte opcional de 'estado'.
-        Este queryset queda disponible como 'prestamos' y también sirve de base para el agrupado.
+        Filtros originales (usuario, fechas, montos y opcional 'estado').
+        Este queryset NO está paginado; ListView lo paginará para 'prestamos/page_obj'.
         """
         qs = Prestamo.objects.select_related("usuario").order_by("-fecha_desembolso")
 
@@ -25,7 +25,7 @@ class PrestamoListView(ListView):
         fecha_fin = self.request.GET.get("fecha_fin")
         monto_min = self.request.GET.get("monto_min")
         monto_max = self.request.GET.get("monto_max")
-        estado = self.request.GET.get("estado")  # 'vigentes' | 'pagados' (opcional)
+        estado = self.request.GET.get("estado")  # 'vigentes' | 'pagados' | None
 
         if usuario:
             qs = qs.filter(usuario__username__icontains=usuario)
@@ -40,7 +40,6 @@ class PrestamoListView(ListView):
         if monto_max:
             qs = qs.filter(monto__lte=monto_max)
 
-        # Si usan el filtro de estado clásico, lo aplicamos al queryset base
         if estado == "vigentes":
             qs = qs.filter(capital_pendiente__gt=0)
         elif estado == "pagados":
@@ -51,34 +50,28 @@ class PrestamoListView(ListView):
     def get_context_data(self, **kwargs):
         """
         Además del contexto clásico (page_obj/paginator/prestamos),
-        añadimos un contexto paralelo para 'agrupado por usuario':
-          - users_page: página de grupos (usuarios)
-          - paginator_users / is_paginated_users
-          - historico: bool que indica si se muestran también préstamos con saldo 0
+        añadimos el agrupado por usuario usando un queryset **no paginado** (full_qs),
+        para evitar filtrar sobre un queryset ya 'sliced'.
         """
         context = super().get_context_data(**kwargs)
 
-        # --- Modo agrupado por usuario ---
         historico = self.request.GET.get("historico") == "1"
 
-        # Base ya filtrada por el get_queryset (respeta usuario/fechas/montos y quizá 'estado')
-        base_qs = context["prestamos"]
+        # ✅ Tomamos el queryset COMPLETO y SIN PAGINAR
+        full_qs = self.get_queryset().select_related("usuario")
 
-        # Para mostrar: si NO es histórico, ocultamos los saldos 0
-        if historico:
-            qs_display = base_qs
-        else:
-            qs_display = base_qs.filter(capital_pendiente__gt=0)
+        # Si NO es histórico, ocultamos saldos 0
+        qs_display = full_qs if historico else full_qs.filter(capital_pendiente__gt=0)
 
-        # Contador de pendientes reales por usuario (independiente del 'historico')
+        # Contador de préstamos pendientes (saldo > 0) por usuario, usando el queryset completo
         pendientes_por_usuario = {}
-        for p in base_qs:
+        for p in full_qs:
             if (p.capital_pendiente or 0) > 0:
                 pendientes_por_usuario[p.usuario_id] = pendientes_por_usuario.get(p.usuario_id, 0) + 1
 
-        # Construir grupos por usuario a partir de lo que se va a mostrar (qs_display)
-        grupos = {}  # user_id -> {"usuario": obj_user, "prestamos": [...], "saldo_total": Decimal, "pendientes_count": int}
-        for p in qs_display.select_related("usuario"):
+        # Agrupar para mostrar
+        grupos = {}  # user_id -> {"usuario": User, "prestamos": [Prestamo], "saldo_total": Decimal, "pendientes_count": int}
+        for p in qs_display:
             d = grupos.get(p.usuario_id)
             if not d:
                 d = {
@@ -91,11 +84,11 @@ class PrestamoListView(ListView):
             d["prestamos"].append(p)
             d["saldo_total"] += p.capital_pendiente or 0
 
-        # Ordenar por nombre de usuario (puedes cambiar a saldo_total descendente si te interesa)
+        # Orden por nombre de usuario (puedes cambiar a saldo_total desc si te conviene)
         items = list(grupos.values())
         items.sort(key=lambda x: (x["usuario"].username or "").lower())
 
-        # Paginación por usuario (independiente de la paginación clásica por préstamos)
+        # Paginación por usuario (independiente de la paginación 'clásica' de ListView)
         page_number = self.request.GET.get("page")
         paginator_users = Paginator(items, self.paginate_by)
         users_page = paginator_users.get_page(page_number)
@@ -105,8 +98,7 @@ class PrestamoListView(ListView):
         context["is_paginated_users"] = paginator_users.num_pages > 1
         context["historico"] = historico
 
-        # Para no romper plantillas antiguas que esperaban 'prestamos_filtrados_estado'
-        # (ya no aplicamos ese filtrado “por página” aquí, porque el agrupado lo vuelve innecesario)
+        # Mantén compatibilidad con plantillas previas
         context["prestamos_filtrados_estado"] = None
 
         return context
