@@ -251,6 +251,10 @@ class PagoAplicacion(models.Model):
     TIPO_CHOICES = [
         ("aporte", "Aporte"),
         ("prestamo", "Préstamo"),
+        # nuevos conceptos
+        ("aporte_viaje", "Aportes Adicionales (Viaje)"),
+        ("admin_app", "Administración APP"),
+        ("actividad_recaudo", "Recaudo Actividad"),
     ]
 
     pago = models.ForeignKey("Pago", on_delete=models.CASCADE, related_name="aplicaciones")
@@ -312,6 +316,28 @@ class PagoAplicacion(models.Model):
                         soporte=soporte
                     )
                     self.aporte = ap
+
+        elif self.tipo in ("aporte_viaje", "admin_app", "actividad_recaudo"):
+            # Estos conceptos NO son préstamo ni aporte ordinario
+            self.prestamo = None
+            self.cuota = None
+        
+            # No generan capital ni interés
+            self.capital = Decimal("0")
+            self.interes = Decimal("0")
+        
+            # Solo usan monto_aplicado
+            if not self.monto_aplicado:
+                self.monto_aplicado = Decimal("0")
+        
+            # Nunca deben quedar ligados a un Aporte
+            if self.aporte_id:
+                try:
+                    self.aporte.delete()
+                except Exception:
+                    pass
+                self.aporte = None
+
         super().save(*args, **kwargs)
 
     def __str__(self):
