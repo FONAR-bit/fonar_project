@@ -2,21 +2,27 @@
 {% load humanize %}
 
 <style>
-  /* Evita que las columnas se estiren */
-  .table-nowrap {
-    table-layout: auto;
-    white-space: nowrap;
-    width: auto;
-  }
-
   /* Mantiene scroll horizontal limpio */
   .table-responsive {
     overflow-x: auto;
   }
 
+  /* Evita que las celdas hagan wrap por defecto */
+  .table-nowrap {
+    table-layout: auto;
+    width: auto;
+  }
+
   /* Opcional: alinear textos como hoy los tienes */
   th, td {
     vertical-align: middle;
+  }
+
+  /* ✅ Columna Nombre: una sola línea y más ancha */
+  th.col-nombre,
+  td.col-nombre {
+    white-space: nowrap;
+    min-width: 280px; /* ajusta si quieres más ancho: 320px, 400px */
   }
 </style>
 
@@ -48,7 +54,7 @@
             <table class="table table-bordered table-striped table-sm table-nowrap">
                 <thead class="table-dark text-center">
                     <tr>
-                        <th>Nombre</th>
+                        <th class="col-nombre">Nombre</th>
                         <th>Correo</th>
                         <th>Estado</th>
                         <th>Fecha Ingreso</th>
@@ -76,7 +82,7 @@
                 <tbody>
                     {% for u in usuarios_data %}
                     <tr {% if u.nombre == "Terceros" %}class="table-warning fw-bold"{% endif %}>
-                        <td>{{ u.nombre }}</td>
+                        <td class="col-nombre">{{ u.nombre }}</td>
                         <td>{{ u.email }}</td>
                         <td class="text-center">{{ u.estado_usuario }}</td>
                         <td class="text-center">
