@@ -5,17 +5,69 @@
     <meta charset="UTF-8">
     <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-        body { min-height: 100vh; display: flex; flex-direction: column; }
-        .main-container { flex: 1; display: flex; }
-        .sidebar { width: 220px; background-color: #343a40; color: white; flex-shrink: 0; }
-        .sidebar .nav-link { color: #adb5bd; }
-        .sidebar .nav-link.active, .sidebar .nav-link:hover { color: #fff; background-color: #495057; border-radius: 5px; }
-        .content { flex-grow: 1; padding: 20px; background-color: #f8f9fa; overflow-x: auto; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 220px;
+            background-color: #343a40;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .sidebar .nav-link {
+            color: #adb5bd;
+        }
+
+        .sidebar .nav-link.active,
+        .sidebar .nav-link:hover {
+            color: #fff;
+            background-color: #495057;
+            border-radius: 5px;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            background-color: #f8f9fa;
+            overflow-x: auto;
+        }
+
         /* limitar inputs dentro de tablas */
-        .table-responsive .form-control, .table-responsive .form-select { max-width: 160px; font-size: 0.9rem; }
+        .table-responsive .form-control,
+        .table-responsive .form-select {
+            max-width: 160px;
+            font-size: 0.9rem;
+        }
+
+        /* ======================================================
+           ✅ FIX DEFINITIVO: Columna Nombre (NO se parte)
+           ====================================================== */
+        th.col-nombre,
+        td.col-nombre {
+            white-space: nowrap !important;
+            min-width: 340px !important;   /* ajustable */
+            word-break: normal !important;
+            overflow-wrap: normal !important;
+            hyphens: none !important;
+        }
+
+        table {
+            table-layout: auto;
+        }
     </style>
 </head>
+
 <body>
     <!-- Navbar superior -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
@@ -27,13 +79,20 @@
 
             <div class="d-flex align-items-center">
                 {% if user.is_authenticated %}
-                    <span class="navbar-text me-3 text-dark">Hola, {{ user.username }}</span>
+                    <span class="navbar-text me-3 text-dark">
+                        Hola, {{ user.username }}
+                    </span>
                     <form method="post" action="{% url 'dashboard:admin-logout' %}" style="display:inline;">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-dark btn-sm">Cerrar sesión</button>
+                        <button type="submit" class="btn btn-outline-dark btn-sm">
+                            Cerrar sesión
+                        </button>
                     </form>
                 {% else %}
-                    <a class="btn btn-outline-dark btn-sm" href="{% url 'dashboard:admin-login' %}">Iniciar sesión</a>
+                    <a class="btn btn-outline-dark btn-sm"
+                       href="{% url 'dashboard:admin-login' %}">
+                        Iniciar sesión
+                    </a>
                 {% endif %}
             </div>
         </div>
@@ -44,6 +103,7 @@
         <!-- Sidebar -->
         <div class="sidebar d-flex flex-column p-3">
             <h5 class="text-white mb-4">Menú</h5>
+
             <ul class="nav nav-pills flex-column mb-auto">
                 <li>
                     <a href="{% url 'dashboard:home' %}"
@@ -51,24 +111,28 @@
                         🏠 Inicio
                     </a>
                 </li>
+
                 <li>
                     <a href="{% url 'dashboard:usuarios-list' %}"
                        class="nav-link {% if request.resolver_match.url_name|slice:":8" == 'usuarios' %}active{% endif %}">
                         👥 Usuarios
                     </a>
                 </li>
+
                 <li>
                     <a href="{% url 'dashboard:aporte_list' %}"
                        class="nav-link {% if request.resolver_match.url_name|slice:":7" == 'aportes' %}active{% endif %}">
                         💰 Aportes
                     </a>
                 </li>
+
                 <li>
                     <a href="{% url 'dashboard:prestamos-list' %}"
                        class="nav-link {% if request.resolver_match.url_name|slice:":10" == 'prestamos' %}active{% endif %}">
                         📄 Préstamos
                     </a>
                 </li>
+
                 <li>
                     <a href="{% url 'dashboard:pagos-list' %}"
                        class="nav-link {% if request.resolver_match.url_name|slice:":5" == 'pagos' %}active{% endif %}">
@@ -76,7 +140,7 @@
                     </a>
                 </li>
 
-                <!-- ✅ Nuevo: Otros Aportes -->
+                <!-- Otros Aportes -->
                 <li>
                     <a href="{% url 'dashboard:otros-aportes-list' %}"
                        class="nav-link {% if request.resolver_match.url_name|slice:":12" == 'otros-aport' %}active{% endif %}">
@@ -92,7 +156,7 @@
         </div>
     </div>
 
-    <!-- ✅ Bootstrap JS (necesario para collapse, dropdowns, etc.) -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
