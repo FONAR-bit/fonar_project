@@ -225,8 +225,14 @@ def subir_pago(request):
 
 @login_required
 def mis_pagos(request):
-    pagos = Pago.objects.filter(usuario=request.user).order_by('-fecha')
-    return render(request, 'fonar/mis_pagos.html', {'pagos': pagos})
+    # ✅ Solo mostrar pagos del año en curso
+    anio = timezone.localdate().year
+    pagos = Pago.objects.filter(
+        usuario=request.user,
+        fecha__year=anio
+    ).order_by('-fecha')
+
+    return render(request, 'fonar/mis_pagos.html', {'pagos': pagos, 'anio': anio})
 
 
 def cuotas_pendientes(request, prestamo_id):
