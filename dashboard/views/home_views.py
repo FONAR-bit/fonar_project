@@ -217,12 +217,7 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
                     * (Decimal(dias_vinculacion) / Decimal(dias_fondo))
                 )
 
-            rentabilidad = (intereses_ganados / total_aportes * 100) if total_aportes > 0 else 0
             moroso = ultimo_aporte < fecha_ultimo_aporte_general if fecha_ultimo_aporte_general and ultimo_aporte else False
-
-            pago_admin = intereses_ganados * Decimal("0.10")
-            intereses_neto = intereses_ganados - pago_admin
-            total_pagar = total_aportes + intereses_neto
 
             # ============================================================
             # ✅ NUEVO: valores para columnas adicionales en dashboard
@@ -236,6 +231,24 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             )
 
             admin_app_pagado = admin_app_map.get(usuario.id, Decimal("0"))
+
+            # ============================================================
+            # ✅ Pago administración solo sobre intereses (igual que antes)
+            # ============================================================
+            pago_admin = intereses_ganados * Decimal("0.10")
+            intereses_neto = intereses_ganados - pago_admin
+
+            # ============================================================
+            # ✅ AJUSTE 2: Total a pagar incluye Viaje + Actividad (NO Admin APP)
+            # ============================================================
+            total_pagar = total_aportes + intereses_neto + total_aportes_viaje + recaudo_actividad
+
+            # ============================================================
+            # ✅ AJUSTE 3: Rentabilidad incluye Intereses + Recaudo Actividad
+            # ============================================================
+            rentabilidad = (
+                ((intereses_ganados + recaudo_actividad) / total_aportes) * 100
+            ) if total_aportes > 0 else 0
 
             usuarios_data.append({
                 "nombre": f"{usuario.first_name} {usuario.last_name}".strip(),
@@ -322,6 +335,8 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
 
             "pago_admin": sum(u["pago_admin"] for u in usuarios_data),
             "intereses_neto": sum(u["intereses_neto"] for u in usuarios_data),
+
+            # ✅ Ya incluye viaje + actividad (por usuario)
             "total_pagar": sum(u["total_pagar"] for u in usuarios_data),
 
             # ✅ Administración APP como columna (suma de lo pagado por asociados)
@@ -331,7 +346,18 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             "admin_app_total": admin_app_total,
         }
 
-        total_en_fondo = totales["total_aportes"] + totales["intereses_ganados"] - totales["capital_pendiente"]
+        # ============================================================
+        # ✅ AJUSTE 1: Total en el fondo incluye Viaje + Actividad + Admin APP
+        # ============================================================
+        total_en_fondo = (
+            totales["total_aportes"]
+            + totales.get("total_aportes_viaje", Decimal("0"))
+            + totales.get("total_recaudo_actividad", Decimal("0"))
+            + totales.get("admin_app_pagado", Decimal("0"))
+            + totales["intereses_ganados"]
+            - totales["capital_pendiente"]
+        )
+
         balance, _ = FondoBalance.objects.get_or_create(año=año_actual)
 
         primer_aporte_global = Aporte.objects.aggregate(fecha=Min("fecha_aporte"))["fecha"]
