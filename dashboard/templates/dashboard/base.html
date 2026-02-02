@@ -75,6 +75,14 @@
                         💳 Pagos
                     </a>
                 </li>
+
+                <!-- ✅ Nuevo: Otros Aportes -->
+                <li>
+                    <a href="{% url 'dashboard:otros-aportes-list' %}"
+                       class="nav-link {% if request.resolver_match.url_name|slice:":12" == 'otros-aport' %}active{% endif %}">
+                        🧾 Otros Aportes
+                    </a>
+                </li>
             </ul>
         </div>
 

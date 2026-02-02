@@ -10,6 +10,7 @@ from dashboard.views import prestamo_views
 from dashboard.views import tasa_views
 from dashboard.views import solicitud_views
 from dashboard.views.home_views import entregar_fondo_pdf
+from dashboard.views.otros_aportes_views import OtrosAportesListView
 
 app_name = "dashboard"
 
@@ -34,6 +35,7 @@ urlpatterns = [
     path("pagos/<int:pk>/update/", pago_views.PagoUpdateView.as_view(), name="pagos-update"),
     path("pagos/<int:pk>/delete/", pago_views.PagoDeleteView.as_view(), name="pagos-delete"),
     path("pagos/<int:pk>/", pago_views.PagoDetailView.as_view(), name="pagos-detail"),
+    path("otros-aportes/", OtrosAportesListView.as_view(), name="otros-aportes-list"),
 
     # Rutas de aportes
     path('aportes/', aporte_views.aporte_list, name='aporte_list'),

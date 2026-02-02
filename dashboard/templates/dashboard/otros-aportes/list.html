@@ -1,0 +1,134 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% load formato_monedas %}
+
+{% block content %}
+<h2 class="mb-4">Otros Aportes</h2>
+<p class="text-muted mb-3">Movimientos especiales registrados desde aplicaciones de pagos (Viaje, Administración APP, Actividad).</p>
+
+<div class="card">
+  <div class="card-body">
+
+    <form method="get" class="row g-3 mb-3">
+      <div class="col-md-4">
+        <input type="text" name="usuario" class="form-control"
+               placeholder="Buscar por usuario..." value="{{ request.GET.usuario }}">
+      </div>
+
+      <div class="col-md-2">
+        <select name="tipo" class="form-select">
+          <option value="">-- Tipo --</option>
+          <option value="aporte_viaje" {% if request.GET.tipo == "aporte_viaje" %}selected{% endif %}>Aportes Adicionales (Viaje)</option>
+          <option value="admin_app" {% if request.GET.tipo == "admin_app" %}selected{% endif %}>Administración APP</option>
+          <option value="actividad_recaudo" {% if request.GET.tipo == "actividad_recaudo" %}selected{% endif %}>Recaudo Actividad</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <select name="validado" class="form-select">
+          <option value="">-- Validación --</option>
+          <option value="True" {% if request.GET.validado == "True" %}selected{% endif %}>Validados</option>
+          <option value="False" {% if request.GET.validado == "False" %}selected{% endif %}>No validados</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <select name="anio" class="form-select">
+          <option value="">-- Año --</option>
+          {% for y in years %}
+            <option value="{{ y }}" {% if request.GET.anio == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <select name="ordenar" class="form-select">
+          <option value="">-- Ordenar --</option>
+          <option value="-pago__fecha" {% if request.GET.ordenar == "-pago__fecha" %}selected{% endif %}>Más recientes</option>
+          <option value="pago__fecha" {% if request.GET.ordenar == "pago__fecha" %}selected{% endif %}>Más antiguos</option>
+          <option value="-monto_aplicado" {% if request.GET.ordenar == "-monto_aplicado" %}selected{% endif %}>Monto desc</option>
+          <option value="monto_aplicado" {% if request.GET.ordenar == "monto_aplicado" %}selected{% endif %}>Monto asc</option>
+        </select>
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+        <a href="{% url 'dashboard:otros-aportes-list' %}" class="btn btn-secondary btn-sm">Limpiar</a>
+      </div>
+    </form>
+
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Pago ID</th>
+            <th>Usuario</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th class="text-end">Monto</th>
+            <th>Validado</th>
+            <th>Soporte</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+            <tr>
+              <td>{{ item.pago.id }}</td>
+              <td>{{ item.pago.usuario }}</td>
+              <td>{{ item.pago.fecha|date:"d/m/Y" }}</td>
+              <td>{{ item.get_tipo_display }}</td>
+              <td class="text-end">{{ item.monto_aplicado|moneda }}</td>
+              <td>
+                {% if item.pago.validado %}
+                  <span class="badge bg-success">✔ Validado</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Pendiente</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if item.pago.soporte %}
+                  <a href="{{ item.pago.soporte.url }}" target="_blank" class="btn btn-sm btn-outline-primary">📎</a>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'dashboard:pagos-detail' item.pago.id %}" class="btn btn-sm btn-info">👁</a>
+                <a href="{% url 'dashboard:pagos-update' item.pago.id %}" class="btn btn-sm btn-primary">✏️</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="8" class="text-center">No se encontraron movimientos.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+      <nav>
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Anterior</a>
+            </li>
+          {% endif %}
+          {% for i in paginator.page_range %}
+            <li class="page-item {% if page_obj.number == i %}active{% endif %}">
+              <a class="page-link" href="?page={{ i }}&{{ request.GET.urlencode }}">{{ i }}</a>
+            </li>
+          {% endfor %}
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Siguiente</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
