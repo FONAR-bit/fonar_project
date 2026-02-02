@@ -115,7 +115,7 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             else Decimal("0")
         )
 
-        # 3) Administración APP (resumen por usuario + totales)
+        # 3) Administración APP (sumatoria por usuario para columna + total general)
         admin_app_qs = PagoAplicacion.objects.filter(
             tipo="admin_app",
             pago__validado=True,
@@ -127,6 +127,22 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             admin_app_qs.aggregate(total=Sum("monto_aplicado"))["total"] or Decimal("0")
         )
 
+        admin_app_map_qs = (
+            PagoAplicacion.objects.filter(
+                tipo="admin_app",
+                pago__validado=True,
+                pago__fecha__year=año_actual,
+                pago__usuario__tipo_usuario="asociado",
+            )
+            .values("pago__usuario")
+            .annotate(total=Sum("monto_aplicado"))
+        )
+        admin_app_map = {
+            row["pago__usuario"]: (row["total"] or Decimal("0"))
+            for row in admin_app_map_qs
+        }
+
+        # (Dejo este resumen por si lo usas después, aunque ya no irá en el template)
         admin_app_resumen = admin_app_qs.values("pago__usuario").annotate(
             total=Sum("monto_aplicado"),
             movimientos=Count("id"),
@@ -140,7 +156,6 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             else Decimal("0")
         )
 
-        # Para mostrar nombres sin consultas extra por fila
         usuarios_lookup = {
             u.id: u for u in Usuario.objects.filter(tipo_usuario="asociado")
         }
@@ -149,10 +164,7 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
         for row in admin_app_resumen:
             uid = row["pago__usuario"]
             uobj = usuarios_lookup.get(uid)
-            nombre = (
-                f"{uobj.first_name} {uobj.last_name}".strip()
-                if uobj else str(uid)
-            )
+            nombre = (f"{uobj.first_name} {uobj.last_name}".strip() if uobj else str(uid))
             admin_app_data.append({
                 "usuario": nombre,
                 "usuario_id": uid,
@@ -167,9 +179,17 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
         usuarios_data = []
 
         for usuario in Usuario.objects.filter(tipo_usuario="asociado"):
-            primer_aporte = Aporte.objects.filter(usuario=usuario, fecha_aporte__year=año_actual).aggregate(fecha=Min("fecha_aporte"))["fecha"]
-            total_aportes = Aporte.objects.filter(usuario=usuario, fecha_aporte__year=año_actual).aggregate(total=Sum("monto"))["total"] or Decimal("0")
-            ultimo_aporte = Aporte.objects.filter(usuario=usuario, fecha_aporte__year=año_actual).aggregate(fecha=Max("fecha_aporte"))["fecha"]
+            primer_aporte = Aporte.objects.filter(
+                usuario=usuario, fecha_aporte__year=año_actual
+            ).aggregate(fecha=Min("fecha_aporte"))["fecha"]
+
+            total_aportes = Aporte.objects.filter(
+                usuario=usuario, fecha_aporte__year=año_actual
+            ).aggregate(total=Sum("monto"))["total"] or Decimal("0")
+
+            ultimo_aporte = Aporte.objects.filter(
+                usuario=usuario, fecha_aporte__year=año_actual
+            ).aggregate(fecha=Max("fecha_aporte"))["fecha"]
 
             intereses_pagados = (
                 PagoAplicacion.objects.filter(
@@ -181,7 +201,9 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
 
             capital_pendiente = sum(
                 p.capital_pendiente
-                for p in Prestamo.objects.filter(usuario=usuario, fecha_desembolso__year=año_actual)
+                for p in Prestamo.objects.filter(
+                    usuario=usuario, fecha_desembolso__year=año_actual
+                )
             )
 
             participacion = (total_aportes / total_aportes_general * 100) if total_aportes_general > 0 else 0
@@ -213,6 +235,8 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
                 else Decimal("0")
             )
 
+            admin_app_pagado = admin_app_map.get(usuario.id, Decimal("0"))
+
             usuarios_data.append({
                 "nombre": f"{usuario.first_name} {usuario.last_name}".strip(),
                 "email": usuario.email,
@@ -237,6 +261,9 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
                 "pago_admin": pago_admin,
                 "intereses_neto": intereses_neto,
                 "total_pagar": total_pagar,
+
+                # ✅ Columna nueva final
+                "admin_app_pagado": admin_app_pagado,
             })
 
         total_intereses_pagados_terceros = PagoAplicacion.objects.filter(
@@ -247,7 +274,9 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
 
         capital_pendiente_terceros = sum(
             p.capital_pendiente
-            for p in Prestamo.objects.filter(usuario__tipo_usuario="tercero", fecha_desembolso__year=año_actual)
+            for p in Prestamo.objects.filter(
+                usuario__tipo_usuario="tercero", fecha_desembolso__year=año_actual
+            )
         )
 
         if total_intereses_pagados_terceros > 0 or capital_pendiente_terceros > 0:
@@ -275,6 +304,8 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
                 "pago_admin": Decimal("0"),
                 "intereses_neto": Decimal("0"),
                 "total_pagar": Decimal("0"),
+
+                "admin_app_pagado": Decimal("0"),
             })
 
         totales = {
@@ -293,7 +324,10 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             "intereses_neto": sum(u["intereses_neto"] for u in usuarios_data),
             "total_pagar": sum(u["total_pagar"] for u in usuarios_data),
 
-            # Administración APP (recaudo real)
+            # ✅ Administración APP como columna (suma de lo pagado por asociados)
+            "admin_app_pagado": sum(u.get("admin_app_pagado", 0) for u in usuarios_data),
+
+            # (Se mantiene por si lo usas en algún reporte)
             "admin_app_total": admin_app_total,
         }
 
@@ -323,6 +357,7 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             "cantidad_participantes_actividad": cantidad_participantes_actividad,
             "reparto_actividad_por_persona": reparto_actividad_por_persona,
 
+            # (Se mantiene aunque ya no se use en home.html)
             "admin_app_data": admin_app_data,
             "admin_app_total": admin_app_total,
             "admin_app_participantes": admin_app_participantes,

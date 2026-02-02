@@ -13,16 +13,14 @@
     width: auto;
   }
 
-  /* Opcional: alinear textos como hoy los tienes */
   th, td {
     vertical-align: middle;
   }
 
-  /* ✅ Columna Nombre: una sola línea y más ancha */
   th.col-nombre,
   td.col-nombre {
     white-space: nowrap;
-    min-width: 280px; /* ajusta si quieres más ancho: 320px, 400px */
+    min-width: 280px;
   }
 </style>
 
@@ -76,6 +74,9 @@
                         <th>Pago Administración</th>
                         <th>Intereses a Pagar</th>
                         <th>Total a Pagar</th>
+
+                        <!-- ✅ NUEVO: Columna final -->
+                        <th>Administración APP</th>
                     </tr>
                 </thead>
 
@@ -108,10 +109,13 @@
                         <td class="text-end">${{ u.pago_admin|floatformat:0|intcomma }}</td>
                         <td class="text-end">${{ u.intereses_neto|floatformat:0|intcomma }}</td>
                         <td class="text-end">${{ u.total_pagar|floatformat:0|intcomma }}</td>
+
+                        <!-- ✅ NUEVO: valor pagado por Admin APP -->
+                        <td class="text-end">${{ u.admin_app_pagado|floatformat:0|intcomma }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="18" class="text-center">No hay socios con aportes en {{ año_actual }}</td>
+                        <td colspan="19" class="text-center">No hay socios con aportes en {{ año_actual }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -137,60 +141,12 @@
                         <td class="text-end">${{ totales.pago_admin|floatformat:0|intcomma }}</td>
                         <td class="text-end">${{ totales.intereses_neto|floatformat:0|intcomma }}</td>
                         <td class="text-end">${{ totales.total_pagar|floatformat:0|intcomma }}</td>
+
+                        <!-- ✅ NUEVO: total admin app -->
+                        <td class="text-end">${{ totales.admin_app_pagado|floatformat:0|intcomma }}</td>
                     </tr>
                 </tfoot>
             </table>
-        </div>
-    </div>
-</div>
-
-<!-- =========================
-     ADMINISTRACIÓN APP
-========================== -->
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                Administración APP – {{ año_actual }}
-            </div>
-            <div class="card-body">
-
-                <div class="row mb-3">
-                    <div class="col-md-4"><strong>Total recaudado:</strong> ${{ admin_app_total|floatformat:0|intcomma }}</div>
-                    <div class="col-md-4"><strong>Asociados que pagaron:</strong> {{ admin_app_participantes }}</div>
-                    <div class="col-md-4"><strong>Promedio por asociado:</strong> ${{ admin_app_promedio|floatformat:0|intcomma }}</div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
-                        <thead class="table-dark text-center">
-                            <tr>
-                                <th>Usuario</th>
-                                <th class="text-end">Total Pagado</th>
-                                <th class="text-center">Movimientos</th>
-                                <th class="text-center">Última Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for r in admin_app_data %}
-                            <tr>
-                                <td>{{ r.usuario }}</td>
-                                <td class="text-end">${{ r.total|floatformat:0|intcomma }}</td>
-                                <td class="text-center">{{ r.movimientos }}</td>
-                                <td class="text-center">
-                                    {% if r.ultima_fecha %}{{ r.ultima_fecha|date:"d/m/Y" }}{% else %}-{% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center">No hay pagos de Administración APP en {{ año_actual }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-            </div>
         </div>
     </div>
 </div>
