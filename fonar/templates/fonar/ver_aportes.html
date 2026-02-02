@@ -4,7 +4,17 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4 text-center">💵 Mis Aportes</h2>
+    <h2 class="mb-1 text-center">💵 Mis Aportes</h2>
+    <p class="text-center text-muted mb-4">Año {{ anio }}</p>
+
+    <div class="alert alert-light shadow-sm">
+        <div><strong>Total aportes normales:</strong> {{ total_aportes_normales|moneda }}</div>
+        <div><strong>Total aportes viaje:</strong> {{ total_aportes_viaje|moneda }}</div>
+        <hr class="my-2">
+        <div class="fs-5"><strong>Total aportes (año):</strong> {{ total_aportes|moneda }}</div>
+    </div>
+
+    <h4 class="mt-4">Aportes normales</h4>
 
     {% if aportes %}
         <div class="table-responsive">
@@ -37,7 +47,43 @@
         </div>
     {% else %}
         <div class="alert alert-info text-center shadow-sm">
-            No tienes aportes registrados aún.
+            No tienes aportes normales registrados en {{ anio }}.
+        </div>
+    {% endif %}
+
+    <h4 class="mt-5">Otros aportes: Viaje</h4>
+    <p class="text-muted mb-2">Aquí solo aparecen aplicaciones del concepto <strong>Aportes Adicionales (Viaje)</strong>.</p>
+
+    {% if otros_aportes_viaje %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle text-center shadow-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Monto</th>
+                        <th>Pago</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in otros_aportes_viaje %}
+                        <tr>
+                            <td>
+                                {% if app.fecha_aporte %}
+                                    {{ app.fecha_aporte|date:"d/m/Y" }}
+                                {% else %}
+                                    {{ app.pago.fecha|date:"d/m/Y" }}
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-success">{{ app.monto_aplicado|moneda }}</td>
+                            <td>#{{ app.pago.id }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center shadow-sm">
+            No tienes aportes de viaje registrados en {{ anio }}.
         </div>
     {% endif %}
 

@@ -34,17 +34,24 @@
         <div class="col-md-6">
             <div class="card shadow mb-4 text-center">
                 <div class="card-body">
-                    <h4 class="card-title">Total Aportes</h4>
+                    <h4 class="card-title">Total Aportes ({{ anio }})</h4>
+                    <small class="text-muted d-block">Aportes normales + Aportes Viaje</small>
+
                     <p class="display-6 text-primary">
                         <i class="bi bi-piggy-bank-fill"></i>
                         ${{ total_aportes|default_if_none:"0"|floatformat:0|intcomma }}
                     </p>
+
+                    <div class="small text-muted">
+                        <div>Aportes normales: <strong>${{ total_aportes_normales|default_if_none:"0"|floatformat:0|intcomma }}</strong></div>
+                        <div>Aportes Viaje: <strong>${{ total_aportes_viaje|default_if_none:"0"|floatformat:0|intcomma }}</strong></div>
+                    </div>
                 </div>
             </div>
 
             <div class="card shadow mb-4 text-center">
                 <div class="card-body">
-                    <h4 class="card-title">Total Préstamos</h4>
+                    <h4 class="card-title">Total Préstamos ({{ anio }})</h4>
                     <p class="display-6 text-danger">
                         <i class="bi bi-cash-coin"></i>
                         ${{ total_prestamos|default_if_none:"0"|floatformat:0|intcomma }}

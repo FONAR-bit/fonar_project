@@ -16,17 +16,53 @@ import os
 from django.views.decorators.http import require_GET
 from .models import SolicitudPrestamo
 
+# ✅ NUEVO: para filtrar por año en curso
+from django.utils import timezone
+from django.db.models import Q
+
 
 # Página de inicio con KPIs
 @login_required
 def inicio(request):
+    """
+    Reglas (usuario):
+    1) Los valores mostrados deben ser solo del año en curso.
+    2) Total Aportes = Aportes normales + Otros aportes (Viaje).
+    """
     usuario = request.user
+    anio = timezone.localdate().year
 
-    total_aportes = Aporte.objects.filter(usuario=usuario).aggregate(
-        total=Sum('monto')
-    )['total'] or Decimal('0')
+    # Aportes normales (solo año en curso)
+    total_aportes_normales = (
+        Aporte.objects.filter(usuario=usuario, fecha_aporte__year=anio)
+        .aggregate(total=Sum('monto'))['total']
+        or Decimal('0')
+    )
 
-    prestamos = Prestamo.objects.filter(usuario=usuario)
+    # Otros aportes (Viaje) vienen de PagoAplicacion.tipo = 'aporte_viaje'
+    # Nota: algunos registros pueden no tener fecha_aporte, entonces usamos la fecha del pago.
+    otros_aportes_viaje_qs = (
+        PagoAplicacion.objects.filter(
+            pago__usuario=usuario,
+            pago__validado=True,
+            tipo='aporte_viaje',
+        )
+        .filter(
+            Q(fecha_aporte__year=anio) |
+            Q(fecha_aporte__isnull=True, pago__fecha__year=anio)
+        )
+    )
+
+    total_aportes_viaje = (
+        otros_aportes_viaje_qs.aggregate(total=Sum('monto_aplicado'))['total']
+        or Decimal('0')
+    )
+
+    # Total aportes = normales + viaje
+    total_aportes = total_aportes_normales + total_aportes_viaje
+
+    # Préstamos (solo del año en curso, manteniendo tu lógica de saldo capital)
+    prestamos = Prestamo.objects.filter(usuario=usuario, fecha_desembolso__year=anio)
     total_prestamos = Decimal('0')
 
     for prestamo in prestamos:
@@ -48,7 +84,10 @@ def inicio(request):
     diferencia = total_aportes - total_prestamos
 
     return render(request, 'fonar/inicio.html', {
+        'anio': anio,
         'total_aportes': total_aportes,
+        'total_aportes_normales': total_aportes_normales,
+        'total_aportes_viaje': total_aportes_viaje,
         'total_prestamos': total_prestamos,
         'diferencia': diferencia,
     })
@@ -56,8 +95,43 @@ def inicio(request):
 
 @login_required
 def ver_aportes(request):
-    aportes = Aporte.objects.filter(usuario=request.user).order_by('-fecha_aporte')
-    return render(request, 'fonar/ver_aportes.html', {'aportes': aportes})
+    """
+    Reglas (usuario):
+    - Mostrar solo año en curso.
+    - Ver aportes normales + otros aportes (solo Viaje).
+    """
+    anio = timezone.localdate().year
+
+    aportes = Aporte.objects.filter(
+        usuario=request.user,
+        fecha_aporte__year=anio
+    ).order_by('-fecha_aporte')
+
+    otros_aportes_viaje = (
+        PagoAplicacion.objects.filter(
+            pago__usuario=request.user,
+            pago__validado=True,
+            tipo='aporte_viaje',
+        )
+        .filter(
+            Q(fecha_aporte__year=anio) |
+            Q(fecha_aporte__isnull=True, pago__fecha__year=anio)
+        )
+        .order_by('-fecha_aporte', '-pago__fecha')
+    )
+
+    total_aportes_normales = aportes.aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    total_aportes_viaje = otros_aportes_viaje.aggregate(total=Sum('monto_aplicado'))['total'] or Decimal('0')
+    total_aportes = total_aportes_normales + total_aportes_viaje
+
+    return render(request, 'fonar/ver_aportes.html', {
+        'anio': anio,
+        'aportes': aportes,
+        'otros_aportes_viaje': otros_aportes_viaje,
+        'total_aportes_normales': total_aportes_normales,
+        'total_aportes_viaje': total_aportes_viaje,
+        'total_aportes': total_aportes,
+    })
 
 
 @login_required
