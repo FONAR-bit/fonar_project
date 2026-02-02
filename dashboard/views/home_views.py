@@ -3,7 +3,7 @@
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from dashboard.views.mixins import StaffRequiredMixin
-from django.db.models import Sum, Min, Max
+from django.db.models import Sum, Min, Max, Count
 from django.utils import timezone
 from django.utils.timezone import now
 from django.shortcuts import redirect
@@ -72,6 +72,98 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             ).aggregate(total=Sum("interes"))["total"] or Decimal("0")
         )
 
+        # ============================================================
+        # ✅ NUEVO: Pre-cálculos para Otros Aportes (Viaje/Actividad/Admin APP)
+        # ============================================================
+
+        # 1) Aportes Viaje (sumatoria por usuario)
+        aportes_viaje_qs = (
+            PagoAplicacion.objects.filter(
+                tipo="aporte_viaje",
+                pago__validado=True,
+                pago__fecha__year=año_actual,
+                pago__usuario__tipo_usuario="asociado",
+            )
+            .values("pago__usuario")
+            .annotate(total=Sum("monto_aplicado"))
+        )
+        aportes_viaje_map = {
+            row["pago__usuario"]: (row["total"] or Decimal("0"))
+            for row in aportes_viaje_qs
+        }
+
+        # 2) Recaudo Actividad (total y participantes para repartir en partes iguales)
+        actividad_qs = PagoAplicacion.objects.filter(
+            tipo="actividad_recaudo",
+            pago__validado=True,
+            pago__fecha__year=año_actual,
+            pago__usuario__tipo_usuario="asociado",
+        )
+
+        total_recaudo_actividad = (
+            actividad_qs.aggregate(total=Sum("monto_aplicado"))["total"] or Decimal("0")
+        )
+
+        participantes_actividad_ids = list(
+            actividad_qs.values_list("pago__usuario", flat=True).distinct()
+        )
+        cantidad_participantes_actividad = len(participantes_actividad_ids)
+
+        reparto_actividad_por_persona = (
+            (total_recaudo_actividad / Decimal(cantidad_participantes_actividad))
+            if cantidad_participantes_actividad > 0
+            else Decimal("0")
+        )
+
+        # 3) Administración APP (resumen por usuario + totales)
+        admin_app_qs = PagoAplicacion.objects.filter(
+            tipo="admin_app",
+            pago__validado=True,
+            pago__fecha__year=año_actual,
+            pago__usuario__tipo_usuario="asociado",
+        ).select_related("pago", "pago__usuario")
+
+        admin_app_total = (
+            admin_app_qs.aggregate(total=Sum("monto_aplicado"))["total"] or Decimal("0")
+        )
+
+        admin_app_resumen = admin_app_qs.values("pago__usuario").annotate(
+            total=Sum("monto_aplicado"),
+            movimientos=Count("id"),
+            ultima_fecha=Max("pago__fecha"),
+        )
+
+        admin_app_participantes = admin_app_resumen.count()
+        admin_app_promedio = (
+            (admin_app_total / Decimal(admin_app_participantes))
+            if admin_app_participantes > 0
+            else Decimal("0")
+        )
+
+        # Para mostrar nombres sin consultas extra por fila
+        usuarios_lookup = {
+            u.id: u for u in Usuario.objects.filter(tipo_usuario="asociado")
+        }
+
+        admin_app_data = []
+        for row in admin_app_resumen:
+            uid = row["pago__usuario"]
+            uobj = usuarios_lookup.get(uid)
+            nombre = (
+                f"{uobj.first_name} {uobj.last_name}".strip()
+                if uobj else str(uid)
+            )
+            admin_app_data.append({
+                "usuario": nombre,
+                "usuario_id": uid,
+                "total": row["total"] or Decimal("0"),
+                "movimientos": row["movimientos"] or 0,
+                "ultima_fecha": row["ultima_fecha"],
+            })
+
+        # ============================================================
+        # Construcción de tabla principal
+        # ============================================================
         usuarios_data = []
 
         for usuario in Usuario.objects.filter(tipo_usuario="asociado"):
@@ -110,20 +202,38 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             intereses_neto = intereses_ganados - pago_admin
             total_pagar = total_aportes + intereses_neto
 
+            # ============================================================
+            # ✅ NUEVO: valores para columnas adicionales en dashboard
+            # ============================================================
+            total_aportes_viaje = aportes_viaje_map.get(usuario.id, Decimal("0"))
+
+            recaudo_actividad = (
+                reparto_actividad_por_persona
+                if usuario.id in participantes_actividad_ids
+                else Decimal("0")
+            )
+
             usuarios_data.append({
                 "nombre": f"{usuario.first_name} {usuario.last_name}".strip(),
                 "email": usuario.email,
                 "estado_usuario": "Activo" if usuario.is_active else "Inactivo",
                 "fecha_ingreso": primer_aporte,
+
                 "total_aportes": total_aportes,
+                "total_aportes_viaje": total_aportes_viaje,
+
                 "intereses_pagados": intereses_pagados,
                 "capital_pendiente": capital_pendiente,
                 "participacion": participacion,
                 "dias_vinculacion": dias_vinculacion,
+
                 "intereses_ganados": intereses_ganados,
+                "recaudo_actividad": recaudo_actividad,
+
                 "rentabilidad": rentabilidad,
                 "ultimo_aporte": ultimo_aporte,
                 "estado_mora": "Moroso" if moroso else "Al día",
+
                 "pago_admin": pago_admin,
                 "intereses_neto": intereses_neto,
                 "total_pagar": total_pagar,
@@ -146,15 +256,22 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
                 "email": "-",
                 "estado_usuario": "-",
                 "fecha_ingreso": None,
+
                 "total_aportes": Decimal("0"),
+                "total_aportes_viaje": Decimal("0"),
+
                 "intereses_pagados": total_intereses_pagados_terceros,
                 "capital_pendiente": capital_pendiente_terceros,
                 "participacion": 0,
                 "dias_vinculacion": 0,
+
                 "intereses_ganados": Decimal("0"),
+                "recaudo_actividad": Decimal("0"),
+
                 "rentabilidad": 0,
                 "ultimo_aporte": None,
                 "estado_mora": "-",
+
                 "pago_admin": Decimal("0"),
                 "intereses_neto": Decimal("0"),
                 "total_pagar": Decimal("0"),
@@ -162,12 +279,22 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
 
         totales = {
             "total_aportes": sum(u["total_aportes"] for u in usuarios_data),
+            "total_aportes_viaje": sum(u.get("total_aportes_viaje", 0) for u in usuarios_data),
+
             "intereses_pagados": sum(u["intereses_pagados"] for u in usuarios_data),
             "capital_pendiente": sum(u["capital_pendiente"] for u in usuarios_data),
+
             "intereses_ganados": sum(u["intereses_ganados"] for u in usuarios_data),
+
+            # Total recaudado (actividad) - se reparte completo, así que total recaudado = total asignado
+            "total_recaudo_actividad": total_recaudo_actividad,
+
             "pago_admin": sum(u["pago_admin"] for u in usuarios_data),
             "intereses_neto": sum(u["intereses_neto"] for u in usuarios_data),
             "total_pagar": sum(u["total_pagar"] for u in usuarios_data),
+
+            # Administración APP (recaudo real)
+            "admin_app_total": admin_app_total,
         }
 
         total_en_fondo = totales["total_aportes"] + totales["intereses_ganados"] - totales["capital_pendiente"]
@@ -190,6 +317,16 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             "años_disponibles": años_disponibles,
             "total_en_fondo": total_en_fondo,
             "balance": balance,
+
+            # ✅ NUEVO: datos para template
+            "total_recaudo_actividad": total_recaudo_actividad,
+            "cantidad_participantes_actividad": cantidad_participantes_actividad,
+            "reparto_actividad_por_persona": reparto_actividad_por_persona,
+
+            "admin_app_data": admin_app_data,
+            "admin_app_total": admin_app_total,
+            "admin_app_participantes": admin_app_participantes,
+            "admin_app_promedio": admin_app_promedio,
         })
         return context
 
