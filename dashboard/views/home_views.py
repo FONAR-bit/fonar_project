@@ -330,7 +330,7 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
 
             "intereses_ganados": sum(u["intereses_ganados"] for u in usuarios_data),
 
-            # Total recaudado (actividad) - se reparte completo, así que total recaudado = total asignado
+            # Total recaudado (actividad)
             "total_recaudo_actividad": total_recaudo_actividad,
 
             "pago_admin": sum(u["pago_admin"] for u in usuarios_data),
@@ -339,10 +339,9 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             # ✅ Ya incluye viaje + actividad (por usuario)
             "total_pagar": sum(u["total_pagar"] for u in usuarios_data),
 
-            # ✅ Administración APP como columna (suma de lo pagado por asociados)
+            # ✅ Administración APP como columna
             "admin_app_pagado": sum(u.get("admin_app_pagado", 0) for u in usuarios_data),
 
-            # (Se mantiene por si lo usas en algún reporte)
             "admin_app_total": admin_app_total,
         }
 
@@ -378,12 +377,10 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             "total_en_fondo": total_en_fondo,
             "balance": balance,
 
-            # ✅ NUEVO: datos para template
             "total_recaudo_actividad": total_recaudo_actividad,
             "cantidad_participantes_actividad": cantidad_participantes_actividad,
             "reparto_actividad_por_persona": reparto_actividad_por_persona,
 
-            # (Se mantiene aunque ya no se use en home.html)
             "admin_app_data": admin_app_data,
             "admin_app_total": admin_app_total,
             "admin_app_participantes": admin_app_participantes,
@@ -399,9 +396,12 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
             año_actual = timezone.now().year
 
         balance, _ = FondoBalance.objects.get_or_create(año=año_actual)
-        balance.nequi = request.POST.get("nequi") or 0
-        balance.efectivo = request.POST.get("efectivo") or 0
-        balance.daviplata = request.POST.get("daviplata") or 0
+
+        # ✅ Guardado seguro como Decimal (no strings)
+        balance.nequi = Decimal(request.POST.get("nequi") or "0")
+        balance.efectivo = Decimal(request.POST.get("efectivo") or "0")
+        balance.daviplata = Decimal(request.POST.get("daviplata") or "0")
+
         balance.comentarios = request.POST.get("comentarios")
         balance.save()
 
@@ -518,18 +518,6 @@ def entregar_fondo_pdf(request):
                 ("FONTNAME", (0, 1), (-1, -2), "Helvetica"),
                 ("FONTSIZE", (0, 1), (-1, -2), 11),
                 ("BACKGROUND", (0, -1), (-1, -1), colors.black),
-                ("TEXTCOLOR", (0, -1), (-1, -1), colors.white),
-                ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
-                ("FONTSIZE", (0, -1), (-1, -1), 14),
-                ("ALIGN", (1, -1), (1, -1), "RIGHT"),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
             ]))
             elements.append(tabla_totales)
-            elements.append(Spacer(1, 40))
-            elements.append(Paragraph("__________________________________", styles["Normal"]))
-            elements.append(Paragraph("Firma del Socio", styles["Normal"]))
             elements.append(PageBreak())
-
-    doc.build(elements)
-    return response

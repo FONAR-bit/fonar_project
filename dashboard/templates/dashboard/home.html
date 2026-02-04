@@ -1,5 +1,6 @@
 {% extends "dashboard/base.html" %}
 {% load humanize %}
+{% load l10n %}
 
 <style>
   /* Mantiene scroll horizontal limpio */
@@ -168,17 +169,17 @@
                     <div class="mb-2">
                         <label class="form-label">Nequi</label>
                         <input type="number" class="form-control text-end" id="nequi" name="nequi"
-                               value="{{ balance.nequi|floatformat:0 }}">
+                               value="{{ balance.nequi|floatformat:0|unlocalize }}">
                     </div>
                     <div class="mb-2">
                         <label class="form-label">Efectivo</label>
                         <input type="number" class="form-control text-end" id="efectivo" name="efectivo"
-                               value="{{ balance.efectivo|floatformat:0 }}">
+                               value="{{ balance.efectivo|floatformat:0|unlocalize }}">
                     </div>
                     <div class="mb-2">
                         <label class="form-label">Daviplata</label>
                         <input type="number" class="form-control text-end" id="daviplata" name="daviplata"
-                               value="{{ balance.daviplata|floatformat:0 }}">
+                               value="{{ balance.daviplata|floatformat:0|unlocalize }}">
                     </div>
 
                     <div class="mb-2">
@@ -204,16 +205,28 @@
 </div>
 
 <script>
-function calcularDiferencia() {
-    const fondo = {{ total_en_fondo|floatformat:0 }};
-    const nequi = parseFloat(nequi.value) || 0;
-    const efectivo = parseFloat(efectivo.value) || 0;
-    const daviplata = parseFloat(daviplata.value) || 0;
-    diferencia.value = new Intl.NumberFormat("es-CO").format(fondo - (nequi + efectivo + daviplata));
-}
-["nequi","efectivo","daviplata"].forEach(id=>{
-    document.getElementById(id).addEventListener("input",calcularDiferencia)
-});
-calcularDiferencia();
+(function () {
+    const nequiEl = document.getElementById("nequi");
+    const efectivoEl = document.getElementById("efectivo");
+    const daviplataEl = document.getElementById("daviplata");
+    const diferenciaEl = document.getElementById("diferencia");
+
+    function calcularDiferencia() {
+        const fondo = Number("{{ total_en_fondo|floatformat:0|unlocalize }}") || 0;
+
+        const nequi = parseFloat(nequiEl.value) || 0;
+        const efectivo = parseFloat(efectivoEl.value) || 0;
+        const daviplata = parseFloat(daviplataEl.value) || 0;
+
+        const diff = fondo - (nequi + efectivo + daviplata);
+        diferenciaEl.value = new Intl.NumberFormat("es-CO").format(diff);
+    }
+
+    [nequiEl, efectivoEl, daviplataEl].forEach(el => {
+        el.addEventListener("input", calcularDiferencia);
+    });
+
+    calcularDiferencia();
+})();
 </script>
 {% endblock %}
